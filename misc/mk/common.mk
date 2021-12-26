@@ -36,9 +36,11 @@ INCLUDES	:=	include
 #---------------------------------------------------------------------------------
 ARCH	:=	-march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fpic -fvisibility=hidden
 
-CFLAGS	:=	-g -Wall -Werror -O3 \
+CFLAGS	:=	-ggdb -Wall -O3 \
 			-ffunction-sections \
 			-fdata-sections \
+			-DLOGGER_IP=\"$(LOGGER_IP)\" \
+			-DLOGGER_PORT=$(LOGGER_PORT) \
 			$(ARCH) \
 			$(DEFINES)
 
@@ -46,7 +48,8 @@ CFLAGS	+=	$(INCLUDE) -D__SWITCH__ -D__RTLD_6XX__
 
 CFLAGS	+= $(EXL_CFLAGS) -I"$(DEVKITPRO)/libnx/include" -I$(ROOT_SOURCE) $(addprefix -I,$(MODULES))
 
-CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -fno-asynchronous-unwind-tables -fno-unwind-tables -std=gnu++20 
+# used to have -fno-rtti
+CXXFLAGS	:= $(CFLAGS) -fno-exceptions -fno-asynchronous-unwind-tables -fno-unwind-tables -std=gnu++20 
 
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	:=  -specs=$(SPECS_PATH)/$(SPECS_NAME) -g $(ARCH) -Wl,-Map,$(notdir $*.map) -nostartfiles -nostdlib
@@ -94,7 +97,7 @@ endif
 #---------------------------------------------------------------------------------
 
 export OFILES_BIN	:=	$(addsuffix .o,$(BINFILES))
-export OFILES_SRC	:=	$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
+export OFILES_SRC	:=	$(HPPFILES:.hpp=.o) $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
 export OFILES 	:=	$(OFILES_BIN) $(OFILES_SRC)
 export HFILES_BIN	:=	$(addsuffix .h,$(subst .,_,$(BINFILES)))
 
@@ -124,12 +127,12 @@ all: $(BUILD)
 
 $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
-	@$(MAKE) --no-print-directory -C $(BUILD) -f $(MK_PATH)/common.mk
+	@$(MAKE) --no-print-directory -C $(BUILD) -f $(MK_PATH)/common.mk all
 
 #---------------------------------------------------------------------------------
 clean:
 	@echo clean ...
-	@rm -fr $(BUILD) $(TARGET).nso $(TARGET).npdm $(TARGET).elf
+	@rm -fr $(BUILD) $(TARGET).nso $(TARGET).npdm $(TARGET).elf $(ELF_LOCATION)
 
 
 #---------------------------------------------------------------------------------

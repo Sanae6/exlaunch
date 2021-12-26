@@ -31,10 +31,13 @@
     static ret (*_HOOK_IMPL_NAME(name)) args;       \
     static _MAKE_HOOK_T_IMPL(ret, name, args, body)
     
-#define INJECT_HOOK(offset, name)   \
-    exl::hook::HookFunc(offset, _HOOK_NAME(name));
-#define INJECT_HOOK_T(offset, name) \
-    _HOOK_IMPL_NAME(name) = exl::hook::HookFunc(offset, _HOOK_NAME(name), true);
+#define INJECT_HOOK(target, name) exl::hook::Hook(target, _HOOK_NAME(name))
+#define INJECT_HOOK_O(offset, name) INJECT_HOOK(exl::hook::GetTargetOffset(offset), name)
+#define INJECT_HOOK_S(target, name) INJECT_HOOK(GET_SYMBOL(target), name)
+
+#define INJECT_HOOK_T(target, name) _HOOK_IMPL_NAME(name) = exl::hook::Hook(target, _HOOK_NAME(name), true)
+#define INJECT_HOOK_OT(offset, name) INJECT_HOOK_T(exl::hook::GetTargetOffset(offset), name)
+#define INJECT_HOOK_ST(target, name) INJECT_HOOK_T(GET_SYMBOL(target), name)
 
 #define _HOOK_CLASS_VALUE_SUFFIX ClassValue
 #define _HOOK_CLASS_SUFFIX Class
@@ -108,18 +111,18 @@ namespace exl::hook {
     }
 
     template<typename T>
-    inline T HookFunc(T hook, T callback, bool do_trampoline = false) {
+    T Hook(T hook, T callback, bool do_trampoline = false) {
         return util::Hook::HookFunc<T>(hook, callback, do_trampoline);
     }
 
     template<typename T>
-    inline T HookFunc(uintptr_t hook, T callback, bool do_trampoline = false) {
-        return util::Hook::HookFunc<T>(GetTargetOffset(hook), callback, do_trampoline);
+    T Hook(uintptr_t hook, T callback, bool do_trampoline = false) {
+        return util::Hook::HookFunc<T>(hook, callback, do_trampoline);
     }
 
     template<typename T>
-    inline T HookFunc(uintptr_t hook, uintptr_t callback, bool do_trampoline = false) {
-        return util::Hook::HookFunc<T>(GetTargetOffset(hook), GetTargetOffset(callback), do_trampoline);
+    T Hook(uintptr_t hook, uintptr_t callback, bool do_trampoline = false) {
+        return util::Hook::HookFunc<T>(hook, callback, do_trampoline);
     }
 
     /* Core pointer path following. */
