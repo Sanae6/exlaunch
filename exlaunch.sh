@@ -27,7 +27,7 @@ export MOUNT_PATH="/mnt/k"
 #------------------------
 
 # Settings for deploying over FTP. Used by the deploy-ftp.py script.
-export FTP_IP="192.168.0.235"
+export FTP_IP="192.168.1.136"
 export FTP_PORT="5000"
 export FTP_USERNAME="anonymous"
 export FTP_PASSWORD=""
@@ -57,18 +57,20 @@ else
     exit 1
 fi
 
-# Perform user action.
-if [ "$1" == "build" ]; then
-    make $MAKE_ARGS
-    source $SCRIPTS_PATH/post-build.sh
-elif [ "$1" == "clean" ]; then
-    make $MAKE_ARGS clean
-elif [ "$1" == "deploy-sd" ]; then
-    source $SCRIPTS_PATH/deploy-sd.sh
-elif [ "$1" == "deploy-ftp" ]; then
-    $PYTHON $SCRIPTS_PATH/deploy-ftp.py
-elif [ "$1" == "make-npdm-json" ]; then
-    $PYTHON $SCRIPTS_PATH/make-npdm-json.py
-else
-    echo "Invalid arg. (build/clean/deploy-sd/deploy-ftp)"
-fi
+for arg in "$@"
+do
+    if [ "$arg" == "build" ]; then
+        make $MAKE_ARGS
+        source $SCRIPTS_PATH/post-build.sh
+    elif [ "$arg" == "clean" ]; then
+        make $MAKE_ARGS clean
+    elif [ "$arg" == "sd" ]; then
+        source $SCRIPTS_PATH/deploy-sd.sh
+    elif [ "$arg" == "send" ]; then
+        $PYTHON $SCRIPTS_PATH/deploy-ftp.py
+    elif [ "$arg" == "ndpm-json" ]; then
+        $PYTHON $SCRIPTS_PATH/make-npdm-json.py
+    else
+        echo "Invalid arg. (build/clean/deploy-sd/deploy-ftp)"
+    fi
+done

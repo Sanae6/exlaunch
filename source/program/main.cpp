@@ -1,21 +1,33 @@
 #include "lib.hpp"
 
-MAKE_HOOK_T(void, stubCopyright, (bool),
-    /* Call the original implementation of this function, but with a false argument. */
-    impl(false);
-);
-
-/* Declare function to dynamic link with. */
-namespace nn::oe {
-    void SetCopyrightVisibility(bool);
+namespace al {
+    class LiveActor;
+    class Scene {
+    public:
+        virtual void control() {}
+    };
+    void setTransY(LiveActor*, float);
 };
+namespace rs { al::LiveActor* getPlayerActor(const al::Scene*); };
 
+class StageScene : public al::Scene {
+public:
+    void control() override;
+};
+void controlLol(StageScene* scene) {
+    auto actor = rs::getPlayerActor(scene);
+    al::setTransY(actor, 1000.0f);
+}
+MAKE_HOOK_T(void, controlLol, (StageScene* scene), {
+    impl(scene);
+    controlLol(scene);
+});
 extern "C" void exl_main(void* x0, void* x1) {
     /* Setup hooking enviroment. */
     envSetOwnProcessHandle(exl::util::proc_handle::Get());
     exl::hook::Initialize();
 
-    INJECT_HOOK_T(nn::oe::SetCopyrightVisibility, stubCopyright);
+    INJECT_HOOK_T(ctrlx, controlLol);
 
     /*
     For sysmodules/applets, you have to call the entrypoint when ready

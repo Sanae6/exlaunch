@@ -34,7 +34,8 @@ SOURCES		:=	source					\
 				source/lib/reloc		\
 				source/lib/reloc/rtld	\
 				source/lib/util			\
-				source/program				
+				source/program			\
+				source/program/cool
 DATA		:=	data
 INCLUDES	:=	include
 
@@ -43,7 +44,7 @@ INCLUDES	:=	include
 #---------------------------------------------------------------------------------
 ARCH	:=	-march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fpic -fvisibility=hidden -D__thread='^-^'
 
-CFLAGS	:=	-g -Wall -Werror -O3 \
+CFLAGS	:=	-g -Wall -O3 \
 			-ffunction-sections \
 			-fdata-sections \
 			$(ARCH) \
@@ -101,7 +102,7 @@ endif
 #---------------------------------------------------------------------------------
 
 export OFILES_BIN	:=	$(addsuffix .o,$(BINFILES))
-export OFILES_SRC	:=	$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
+export OFILES_SRC	:=	$(HPPFILES:.hpp=.o) $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
 export OFILES 	:=	$(OFILES_BIN) $(OFILES_SRC)
 export HFILES_BIN	:=	$(addsuffix .h,$(subst .,_,$(BINFILES)))
 
