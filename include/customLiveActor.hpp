@@ -2,7 +2,6 @@
 #include "al/util.hpp"
 #include "al/sensor/SensorMsg.h"
 #include "al/util/NerveUtil.h"
-#include "logger.hpp"
 
 // ca = custom actor(s)
 namespace ca

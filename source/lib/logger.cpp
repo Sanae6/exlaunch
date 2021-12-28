@@ -5,7 +5,7 @@
 
 SocketLogState socketLogState = SOCKET_LOG_UNINITIALIZED;
 s32 socket;
-const char* ip = "192.168.1.99";
+const char *ip = "192.168.1.99";
 const u16 port = 1984;
 
 bool tryInitSocket()
@@ -48,23 +48,27 @@ bool tryInitSocket()
     }
 
     socketLogState = SOCKET_LOG_CONNECTED;
-    exl::logger::log("POG\n");
     return true;
 }
 
-u64 strlen(const char* str) {
+u64 strlen(const char *str)
+{
     u64 len = 0;
-    while (str[len++]);
+    while (str[len++])
+        ;
     return len;
 }
-namespace exl::logger {
-
-    void send(const char* data) {
+namespace exl::logger
+{
+    void send(const char *data)
+    {
         if (socketLogState != SOCKET_LOG_CONNECTED && !tryInitSocket())
             return;
 
-        if (nn::socket::Send(socket, data, strlen(data), 0) < 0) {
-            if (tryInitSocket()) nn::socket::Send(socket, data, strlen(data), 0);
+        if (nn::socket::Send(socket, data, strlen(data), 0) < 0)
+        {
+            if (tryInitSocket())
+                nn::socket::Send(socket, data, strlen(data), 0);
         }
     }
 
@@ -84,7 +88,7 @@ namespace exl::logger {
     }
 
     void log(const char *fmt, va_list args)
-    { // impl for replacing seads system::print
+    {
         char buf[0x500];
         if (nn::util::VSNPrintf(buf, sizeof(buf), fmt, args) > 0)
         {
