@@ -44,7 +44,7 @@ INCLUDES	:=	include
 #---------------------------------------------------------------------------------
 ARCH	:=	-march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fpic -fvisibility=hidden -D__thread='^-^'
 
-CFLAGS	:=	-g -Wall -O3 \
+CFLAGS	:=	-g -Wall -O0 \
 			-ffunction-sections \
 			-fdata-sections \
 			$(ARCH) \
@@ -132,12 +132,12 @@ all: $(BUILD)
 
 $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
-	@$(MAKE) --no-print-directory -C $(BUILD) -f $(MK_PATH)/common.mk
+	@$(MAKE) --no-print-directory -C $(BUILD) -f $(MK_PATH)/common.mk all
 
 #---------------------------------------------------------------------------------
 clean:
 	@echo clean ...
-	@rm -fr $(BUILD) $(TARGET).nso $(TARGET).npdm $(TARGET).elf
+	@rm -fr $(BUILD) $(TARGET).nso $(TARGET).npdm $(TARGET).elf $(ELF_LOCATION)
 
 
 #---------------------------------------------------------------------------------

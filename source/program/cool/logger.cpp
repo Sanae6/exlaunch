@@ -1,14 +1,20 @@
 #include "logger.hpp"
+#include "nn/util.h"
+#include "nn/nifm.h"
+#include "nn/socket.h"
 
-Logger *gLogger;
+SocketLogState socketLogState = SOCKET_LOG_UNINITIALIZED;
+s32 socket;
+const char* ip = "192.168.1.99";
+const u16 port = 1984;
 
-void Logger::init()
+bool tryInitSocket()
 {
     in_addr hostAddress = {0};
     sockaddr serverAddress = {0};
 
-    if (this->socket_log_state != SOCKET_LOG_UNINITIALIZED)
-        return;
+    if (socketLogState != SOCKET_LOG_UNINITIALIZED)
+        return false;
 
     nn::nifm::Initialize();
     nn::nifm::SubmitNetworkRequest();
@@ -19,78 +25,70 @@ void Logger::init()
 
     if (!nn::nifm::IsNetworkAvailable())
     {
-        this->socket_log_state = SOCKET_LOG_UNAVAILABLE;
-        return;
+        socketLogState = SOCKET_LOG_UNAVAILABLE;
+        return false;
     }
 
-    if ((this->socket_log_socket = nn::socket::Socket(2, 1, 0)) < 0)
+    if ((socket = nn::socket::Socket(2, 1, 0)) < 0)
     {
-        this->socket_log_state = SOCKET_LOG_UNAVAILABLE;
-        return;
+        socketLogState = SOCKET_LOG_UNAVAILABLE;
+        return false;
     }
 
-    nn::socket::InetAton(this->sock_ip, &hostAddress);
+    nn::socket::InetAton(ip, &hostAddress);
 
     serverAddress.address = hostAddress;
-    serverAddress.port = nn::socket::InetHtons(this->port);
+    serverAddress.port = nn::socket::InetHtons(port);
     serverAddress.family = 2;
 
-    if (nn::socket::Connect(this->socket_log_socket, &serverAddress, sizeof(serverAddress)) != 0)
+    if (nn::socket::Connect(socket, &serverAddress, sizeof(serverAddress)) != 0)
     {
-        this->socket_log_state = SOCKET_LOG_UNAVAILABLE;
-        return;
+        socketLogState = SOCKET_LOG_UNAVAILABLE;
+        return false;
     }
 
-    this->socket_log_state = SOCKET_LOG_CONNECTED;
-
-    this->isDisableName = false;
+    socketLogState = SOCKET_LOG_CONNECTED;
+    exl::logger::log("POG\n");
+    return true;
 }
 
-void Logger::LOG(const char *fmt, ...)
-{
-    va_list args;
-    va_start(args, fmt);
+u64 strlen(const char* str) {
+    u64 len = 0;
+    while (str[len++]);
+    return len;
+}
+namespace exl::logger {
 
-    char buf[0x500];
+    void send(const char* data) {
+        if (socketLogState != SOCKET_LOG_CONNECTED && !tryInitSocket())
+            return;
 
-    if (nn::util::VSNPrintf(buf, sizeof(buf), fmt, args) > 0)
-    {
-        if (!isDisableName)
-        {
-            char prefix[0x510];
-            nn::util::SNPrintf(prefix, sizeof(prefix), "[%s] %s", this->sockName, buf);
-            socket_log(prefix);
-        }
-        else
-        {
-            socket_log(buf);
+        if (nn::socket::Send(socket, data, strlen(data), 0) < 0) {
+            if (tryInitSocket()) nn::socket::Send(socket, data, strlen(data), 0);
         }
     }
 
-    va_end(args);
-}
-
-void Logger::LOG(const char *fmt, va_list args)
-{ // impl for replacing seads system::print
-    char buf[0x500];
-    if (nn::util::VSNPrintf(buf, sizeof(buf), fmt, args) > 0)
+    void log(const char *fmt, ...)
     {
-        socket_log(buf);
+        va_list args;
+        va_start(args, fmt);
+
+        char buf[0x500];
+
+        if (nn::util::VSNPrintf(buf, sizeof(buf), fmt, args) > 0)
+        {
+            send(buf);
+        }
+
+        va_end(args);
     }
-}
 
-s32 Logger::READ(char *out)
-{
-    return this->socket_read_char(out);
-}
-
-bool Logger::pingSocket()
-{
-    return socket_log("ping") > 0; // if value is greater than zero, than the socket recieved our message, otherwise the connection was lost.
-}
-
-void tryInitSocket()
-{
-    __asm("STR X20, [X8,#0x18]");
-    gLogger = new Logger("192.168.1.94", 3080, "MainLogger"); // PLACE LOCAL PC IP ADDRESS HERE
-}
+    void log(const char *fmt, va_list args)
+    { // impl for replacing seads system::print
+        char buf[0x500];
+        if (nn::util::VSNPrintf(buf, sizeof(buf), fmt, args) > 0)
+        {
+            send(buf);
+        }
+    }
+};

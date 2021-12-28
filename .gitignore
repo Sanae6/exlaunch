@@ -6,3 +6,6 @@ deploy/*
 *.elf
 *.nso
 *.npdm
+.idea/
+# in case you're using ida to check something
+*.elf.*
