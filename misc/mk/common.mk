@@ -47,6 +47,8 @@ ARCH	:=	-march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fpic -fvisibility
 CFLAGS	:=	-ggdb -Wall -O3 \
 			-ffunction-sections \
 			-fdata-sections \
+			-DLOGGER_IP=\"$(LOGGER_IP)\" \
+			-DLOGGER_PORT=$(LOGGER_PORT) \
 			$(ARCH) \
 			$(DEFINES)
 

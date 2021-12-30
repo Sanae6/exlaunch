@@ -5,8 +5,6 @@
 
 SocketLogState socketLogState = SOCKET_LOG_UNINITIALIZED;
 s32 socket;
-const char *ip = "192.168.1.99";
-const u16 port = 1984;
 
 bool tryInitSocket()
 {
@@ -35,10 +33,10 @@ bool tryInitSocket()
         return false;
     }
 
-    nn::socket::InetAton(ip, &hostAddress);
+    nn::socket::InetAton(LOGGER_IP, &hostAddress);
 
     serverAddress.address = hostAddress;
-    serverAddress.port = nn::socket::InetHtons(port);
+    serverAddress.port = nn::socket::InetHtons(LOGGER_PORT);
     serverAddress.family = 2;
 
     if (nn::socket::Connect(socket, &serverAddress, sizeof(serverAddress)) != 0)
