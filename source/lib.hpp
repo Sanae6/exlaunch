@@ -13,5 +13,7 @@
 #include "lib/util/lazy_init.hpp"
 #include "lib/util/soc.hpp"
 
+#include "lib/logger.hpp"
 #include "lib/hook.hpp"
 #include "lib/replace.hpp"
+#include "lib/symbol.hpp"

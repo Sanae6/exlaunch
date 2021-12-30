@@ -44,7 +44,7 @@ INCLUDES	:=	include
 #---------------------------------------------------------------------------------
 ARCH	:=	-march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fpic -fvisibility=hidden -D__thread='^-^'
 
-CFLAGS	:=	-g -Wall -O0 \
+CFLAGS	:=	-ggdb -Wall -O3 \
 			-ffunction-sections \
 			-fdata-sections \
 			$(ARCH) \
@@ -54,10 +54,11 @@ CFLAGS	+=	$(INCLUDE) -D__SWITCH__ -D__RTLD_6XX__
 
 CFLAGS	+= $(EXL_CFLAGS)
 
-CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -fno-asynchronous-unwind-tables -fno-unwind-tables -std=gnu++20 
+# used to have -fno-rtti
+CXXFLAGS	:= $(CFLAGS) -fno-exceptions -fno-asynchronous-unwind-tables -fno-unwind-tables -std=gnu++20 
 
-ASFLAGS	:=	-g $(ARCH)
-LDFLAGS	:=  -specs=$(SPECS_PATH)/$(SPECS_NAME) -g $(ARCH) -Wl,-Map,$(notdir $*.map) -nostartfiles 
+ASFLAGS	:=	-ggdb $(ARCH)
+LDFLAGS	:=  -specs=$(SPECS_PATH)/$(SPECS_NAME) $(ARCH) -Wl,-Map,$(notdir $*.map) -nostartfiles 
 
 LIBS	:= -lc
 
