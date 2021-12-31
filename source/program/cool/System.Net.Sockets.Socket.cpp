@@ -25,28 +25,19 @@
 
 #include "System.Array.h"
 
-#ifdef _WIN32
-#define ERRNO WSAGetLastError()
-#define WOULDBLOCK WSAEWOULDBLOCK
-#else
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <errno.h>
-#define ERRNO errno
-#define WOULDBLOCK EWOULDBLOCK
-#endif
+#include "nn/nifm.h"
+#include "nn/socket.h"
+#include "syssocket/sockdefines.h"
+#include "inet/protocoltypes.h"
 
 void Socket_Init() {
-#ifdef _WIN32
-	WSADATA d;
-	WSAStartup(0x0202, &d);
-#endif
+	nn::nifm::Initialize();
+	nn::nifm::SubmitNetworkRequestAndWait();
 }
 
 tAsyncCall* System_Net_Sockets_Internal_CreateSocket(PTR pThis_, PTR pParams, PTR pReturnValue) {
 
-	int s;
+	Result s;
 
 	U32 family = INTERNALCALL_PARAM(0, U32);
 	U32 type = INTERNALCALL_PARAM(4, U32);
@@ -55,25 +46,18 @@ tAsyncCall* System_Net_Sockets_Internal_CreateSocket(PTR pThis_, PTR pParams, PT
 
 	*(void**)pReturnValue = NULL;
 
-	s = (int)socket(family, type, proto);
+	s = nn::socket::Socket(family, type, proto);
 
 	if (s == -1) {
 		// Error
-		*pError = ERRNO;
+		*pError = s;
 		s = 0;
 	} else {
 		*pError = 0;
 	}
 
-	// Set socket to non-blocking
-#ifdef _WIN32
-	{
-		u_long nonblock = 1;
-		ioctlsocket(s, FIONBIO, &nonblock);
-	}
-#else
-	fcntl(s, F_SETFL, O_NONBLOCK);
-#endif
+	nn::socket::Fcntl(s, F_SETFL, O_NONBLOCK);
+	
 
 	*(int*)pReturnValue = s;
 
@@ -81,25 +65,18 @@ tAsyncCall* System_Net_Sockets_Internal_CreateSocket(PTR pThis_, PTR pParams, PT
 }
 
 tAsyncCall* System_Net_Sockets_Internal_Bind(PTR pThis_, PTR pParams, PTR pReturnValue) {
-
-	struct sockaddr_in sa;
-	int r;
+	struct sockaddr sa;
 
 	int s = INTERNALCALL_PARAM(0, int);
 	U32 addr = INTERNALCALL_PARAM(4, U32);
 	U32 port = INTERNALCALL_PARAM(8, U32);
 	U32 *pError = INTERNALCALL_PARAM(12, U32*);
 
-	sa.sin_family = AF_INET;
-#ifdef _WIN32
-	sa.sin_addr.S_un.S_addr = addr;
-#else
-	sa.sin_addr.s_addr = addr;
-#endif
-	sa.sin_port = htons(port);
+	sa.family = AF_INET;
+	sa.address.data = addr;
+	sa.port = nn::socket::InetHtons(port);
 
-	r = bind(s, (struct sockaddr*)&sa, sizeof(sa));
-	*pError = (r != 0)?ERRNO:0;
+	*pError = R_FAILED(nn::socket::Bind(s, (struct sockaddr*)&sa, sizeof(sa)));
 
 	return NULL;
 }
@@ -108,11 +85,7 @@ tAsyncCall* System_Net_Sockets_Internal_Close(PTR pThis_, PTR pParams, PTR pRetu
 
 	int s = INTERNALCALL_PARAM(0, int);
 
-#ifdef _WIN32
-	closesocket(s);
-#else
-	close(s);
-#endif
+	nn::socket::Close(s);
 
 	return NULL;
 }
@@ -122,9 +95,7 @@ tAsyncCall* System_Net_Sockets_Internal_Listen(PTR pThis_, PTR pParams, PTR pRet
 	U32 backlog = INTERNALCALL_PARAM(4, U32);
 	U32 *pError = INTERNALCALL_PARAM(8, U32*);
 
-	int r = listen(s, backlog);
-
-	*pError = (r != 0)?ERRNO:0;
+	*pError = nn::socket::Listen(s, backlog);
 
 	return NULL;
 }
@@ -132,13 +103,13 @@ tAsyncCall* System_Net_Sockets_Internal_Listen(PTR pThis_, PTR pParams, PTR pRet
 static U32 Accept_Check(PTR pThis_, PTR pParams, PTR pReturnValue, tAsyncCall *pAsync) {
 	int s = INTERNALCALL_PARAM(0, int);
 	U32 *pError = INTERNALCALL_PARAM(4, U32*);
-	int newS;
+	Result newS;
 
-	newS = (int)accept(s, NULL, 0);
+	newS = (int)nn::socket::Accept(s, NULL, 0);
 	if (newS == -1) {
 		// Blocked or error
-		int err = ERRNO;
-		if (err == WOULDBLOCK) {
+		int err = newS;
+		if (err == WOULD) {
 			return 0;
 		} else {
 			*(U32*)pReturnValue = 0;
@@ -314,7 +285,7 @@ static U32 Send_Check(PTR pThis_, PTR pParams, PTR pReturnValue, tAsyncCall *pAs
 
 	buffer = SystemArray_GetElements(bufferArray) + ofs + pState->count;
 
-	r = send(s, buffer, size, flags);
+	r = nn::socket::Send(s, buffer, size, flags);
 	//printf("Send_Check: r=%d\n", r);
 
 	if (r >= 0) {

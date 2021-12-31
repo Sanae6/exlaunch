@@ -23,11 +23,6 @@
 
 #include "Config.h"
 
-/*#ifdef _DEBUG
-void* mallocTrace(int s, char *pFile, int line);
-#define malloc(s) mallocTrace(s, __FILE__, __LINE__)
-#endif*/
-
 #ifdef _DEBUG
 #define Assert(cond) if (!(cond)) Crash("Assert failed: %s, line %d", __FILE__, __LINE__);
 #else
@@ -47,6 +42,10 @@ void log_f(U32 level, char *pMsg, ...);
 
 char* Sys_GetMethodDesc(tMD_MethodDef *pMethod);
 
+void Sys_Init();
+
+void* malloc(size_t size);
+void free(void* memory);
 void* mallocForever(U32 size);
 
 char* stringOrNull(char* str);

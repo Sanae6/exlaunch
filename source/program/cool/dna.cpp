@@ -21,27 +21,43 @@
 #include "Compat.h"
 #include "Sys.h"
 
-#include "System.DateTime.h"
+#include "CLIFile.h"
+#include "MetaData.h"
+#include "Type.h"
+#include "Heap.h"
+#include "Finalizer.h"
+#include "System.Net.Sockets.Socket.h"
+#include "MethodState.h"
+#include "lib/nx/abort.h"
+#include "lib/logger.hpp"
 
-#ifndef _WIN32
+static void ShowUsage() {
+	exl::logger::log("Usage:\n");
+	exl::logger::log("\tdna [-v] <.Net executable to execute> [.Net executable arguments]\n");
+	exl::logger::log("\n");
+	exl::logger::log("\t-v  : Verbose output of files loaded and GC statistics\n");
+	exl::logger::log("\t-vv : More verbose output, including methods JITted and types/arrays/generics use\n");
+	exl::logger::log("\n");
+	EXL_ABORT(0x423);
+}
 
-#include <sys/time.h>
+void DNA_Init() {
+	JIT_Execute_Init();
+	MetaData_Init();
+	Type_Init();
+	Heap_Init();
+	Finalizer_Init();
+	Socket_Init();
+}
 
-#endif
+void DNA_Load() {
+	tCLIFile *pCLIFile;
+	pCLIFile = CLIFile_Load("romfs:/DNA/TestProject.dll");
 
-#define TicksPerSecond 10000000L
-#define TicksPerMicroSecond 10L
-#define TicksAtUnixEpoch 621355968000000000L
-#define TicksAtFileTimeEpoch 504911232000000000L
-
-tAsyncCall* System_DateTime_InternalUtcNow(PTR pThis_, PTR pParams, PTR pReturnValue) {
-
-	struct timeval tp;
-
-	gettimeofday(&tp, NULL);
-
-	*(U64*)pReturnValue = ((U64)tp.tv_sec) * TicksPerSecond + ((U64)tp.tv_usec) * TicksPerMicroSecond
-		+ TicksAtUnixEpoch;
-
-	return NULL;
+	if (pCLIFile->entryPoint) {
+		char* argv[] = {"sex", "sex"};
+		CLIFile_Execute(pCLIFile, 1, argv);
+	} else {
+		exl::logger::log("File %s has no entry point, skipping execution\n");
+	}
 }

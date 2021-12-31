@@ -30,27 +30,19 @@
 #include "MetaData.h"
 #include "Types.h"
 
+#include "lib.hpp"
+#include "nn/util.h"
+
 void Crash(char *pMsg, ...) {
 	va_list va;
 
-	printf("\n\n*** CRASH ***\n");
-
+	exl::logger::log("\n\n*** CRASH ***\n");
 	va_start(va, pMsg);
-
-	vprintf(pMsg, va);
-
+	exl::logger::log(pMsg, va);
 	va_end(va);
+	exl::logger::log("\n\n");
 
-	printf("\n\n");
-
-#ifdef _WIN32
-	{
-		// Cause a delibrate exception, to get into debugger
-		__debugbreak();
-	}
-#endif
-
-	exit(1);
+	EXL_ABORT(0x422);
 }
 
 U32 logLevel = 0;
@@ -60,7 +52,7 @@ void log_f(U32 level, char *pMsg, ...) {
 
 	if (logLevel >= level) {
 		va_start(va, pMsg);
-		vprintf(pMsg, va);
+		exl::logger::log(pMsg, va);
 		va_end(va);
 	}
 }
@@ -69,29 +61,46 @@ static char methodName[2048];
 char* Sys_GetMethodDesc(tMD_MethodDef *pMethod) {
 	U32 i;
 
-	sprintf(methodName, "%s.%s.%s(", pMethod->pParentType->nameSpace, pMethod->pParentType->name, pMethod->name);
+	nn::util::SNPrintf(methodName, 2048, "%s.%s.%s(", pMethod->pParentType->nameSpace, pMethod->pParentType->name, pMethod->name);
 	for (i=METHOD_ISSTATIC(pMethod)?0:1; i<pMethod->numberOfParameters; i++) {
 		if (i > (U32)(METHOD_ISSTATIC(pMethod)?0:1)) {
-			sprintf(strchr(methodName, 0), ",");
+			nn::util::SNPrintf(strchr(methodName, 0), 2048, ",");
 		}
-		sprintf(strchr(methodName, 0), pMethod->pParams[i].pTypeDef->name);
+		nn::util::SNPrintf(strchr(methodName, 0), 2048, (const char*) pMethod->pParams[i].pTypeDef->name);
 	}
-	sprintf(strchr(methodName, 0), ")");
+	nn::util::SNPrintf(strchr(methodName, 0), 2048, ")");
 	return methodName;
+}
+
+#include "nn/init.h"
+#include "nn/mem.h"
+
+nn::mem::StandardAllocator* allocator;
+
+void Sys_Init() {
+	allocator = nn::init::GetAllocator();
+}
+
+void* malloc(size_t size) {
+	return allocator->Allocate(size);
+}
+
+void free(void* address) {
+	allocator->Free(address);
 }
 
 static U32 mallocForeverSize = 0;
 // malloc() some memory that will never need to be resized or freed.
 void* mallocForever(U32 size) {
 	mallocForeverSize += size;
-log_f(3, "--- mallocForever: TotalSize %d\n", mallocForeverSize);
+	log_f(3, "--- mallocForever: TotalSize %d\n", mallocForeverSize);
 	return malloc(size);
 }
 
 char* stringOrNull(char* str) {
-	char* loc = malloc(16);
+	char* loc = new char[16];
 	memset(loc, 0, 16);
-	sprintf(loc, "%p", str);
+	nn::util::SNPrintf(loc, 16, "%p", str);
 	if (str != NULL) return str;
 	return "NULL";
 }
@@ -149,10 +158,10 @@ U64 microTime() {
 #endif
 
 void SleepMS(U32 ms) {
-#ifdef _WIN32
-	Sleep(ms);
-#else
-	sleep(ms / 1000);
-	usleep((ms % 1000) * 1000);
-#endif
+// #ifdef _WIN32
+// 	Sleep(ms);
+// #else
+// 	sleep(ms / 1000);
+// 	usleep((ms % 1000) * 1000);
+// #endif
 }

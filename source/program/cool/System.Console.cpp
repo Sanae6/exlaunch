@@ -27,6 +27,8 @@
 #include "Types.h"
 #include "Type.h"
 
+#include "nn/util.h"
+
 tAsyncCall* System_Console_Write(PTR pThis_, PTR pParams, PTR pReturnValue) {
 	HEAP_PTR string;
 	STRING2 str;
@@ -35,10 +37,13 @@ tAsyncCall* System_Console_Write(PTR pThis_, PTR pParams, PTR pReturnValue) {
 	string = *(HEAP_PTR*)pParams;
 	if (string != NULL) {
 #define SUB_LEN 128
-		unsigned char str8[SUB_LEN+1];
+		unsigned char str8[SUB_LEN+1] = {};
 		U32 start = 0;
 		str = SystemString_GetString(string, &strLen);
-		exl::logger::log(""str);
+		while (strLen > 0) {
+			int len = strLen > SUB_LEN ? SUB_LEN : strLen;
+			memcpy(str8, str, len);
+		}
 	}
 
 	return NULL;
