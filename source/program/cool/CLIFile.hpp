@@ -18,53 +18,37 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "Compat.hpp"
-#include "Sys.hpp"
+#if !defined (__CLIFILE_H)
+#define __CLIFILE_H
 
-#include "System.String.hpp"
-
-#include "MetaData.hpp"
+#include "RVA.hpp"
 #include "Types.hpp"
-#include "Type.hpp"
+#include "MetaData.hpp"
 
-#include "nn/util.h"
+typedef struct tCLIFile_ tCLIFile;
+struct tCLIFile_ {
+	// The filename
+	char *pFileName;
+    // The debug filename
+    char* pDebugFileName;
+	// The RVA sections of this file
+	tRVA *pRVA;
+	// NULL-terminated UTF8 string of file version
+	unsigned char *pVersion;
+	// The entry point token if this is executable, 0 if it isn't
+	IDX_TABLE entryPoint;
 
-tAsyncCall* System_Console_Write(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	HEAP_PTR string;
-	STRING2 str;
-	U32 i, strLen;
+	tMetaData *pMetaData;
+};
 
-	string = *(HEAP_PTR*)pParams;
-	if (string != NULL) {
-#define SUB_LEN 128
-		unsigned char str8[SUB_LEN+1] = {};
-		U32 start = 0;
-		str = SystemString_GetString(string, &strLen);
-		while (strLen > 0) {
-			int len = strLen > SUB_LEN ? SUB_LEN : strLen;
-			memcpy(str8, str, len);
-		}
-	}
+// static methods
+tMetaData* CLIFile_GetMetaDataForAssembly(unsigned char *pAssemblyName);
+tMetaData* CLIFile_GetMetaDataForLoadedAssembly(unsigned char *pLoadedAssemblyName);
+tMD_TypeDef* CLIFile_FindTypeInAllLoadedAssemblies(STRING nameSpace, STRING name);
+void CLIFile_GetHeapRoots(tHeapRoots *pHeapRoots);
 
-	return NULL;
-}
+// instance methods
+tCLIFile* CLIFile_Load(char *pFileName);
+I32 CLIFile_Execute(tCLIFile *pThis, int argc, char **argp);
 
-static U32 Internal_ReadKey_Check(PTR pThis_, PTR pParams, PTR pReturnValue, tAsyncCall *pAsync) {
-	*(U32*)pReturnValue = 0xFFFFFFFF;
-	return 1;
-}
-
-tAsyncCall* System_Console_Internal_ReadKey(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	tAsyncCall *pAsync = TMALLOC(tAsyncCall);
-
-	pAsync->sleepTime = -1;
-	pAsync->checkFn = Internal_ReadKey_Check;
-	pAsync->state = NULL;
-
-	return pAsync;
-}
-
-tAsyncCall* System_Console_Internal_KeyAvailable(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	*(U32*)pReturnValue = 0;
-	return NULL;
-}
+#endif

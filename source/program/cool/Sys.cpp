@@ -24,11 +24,11 @@
 #include <sys/time.h>
 #endif // _WIN32
 
-#include "Compat.h"
-#include "Sys.h"
+#include "Compat.hpp"
+#include "Sys.hpp"
 
-#include "MetaData.h"
-#include "Types.h"
+#include "MetaData.hpp"
+#include "Types.hpp"
 
 #include "lib.hpp"
 #include "nn/util.h"
@@ -81,11 +81,11 @@ void Sys_Init() {
 	allocator = nn::init::GetAllocator();
 }
 
-void* malloc(size_t size) {
+void* dna::malloc(size_t size) {
 	return allocator->Allocate(size);
 }
 
-void free(void* address) {
+void dna::free(void* address) {
 	allocator->Free(address);
 }
 
@@ -94,7 +94,7 @@ static U32 mallocForeverSize = 0;
 void* mallocForever(U32 size) {
 	mallocForeverSize += size;
 	log_f(3, "--- mallocForever: TotalSize %d\n", mallocForeverSize);
-	return malloc(size);
+	return dna::malloc(size);
 }
 
 char* stringOrNull(char* str) {

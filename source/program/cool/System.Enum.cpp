@@ -21,50 +21,48 @@
 #include "Compat.hpp"
 #include "Sys.hpp"
 
-#include "System.String.hpp"
+#include "System.Enum.hpp"
 
 #include "MetaData.hpp"
 #include "Types.hpp"
 #include "Type.hpp"
+#include "System.RuntimeType.hpp"
+#include "System.Array.hpp"
+#include "System.String.hpp"
 
-#include "nn/util.h"
-
-tAsyncCall* System_Console_Write(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	HEAP_PTR string;
-	STRING2 str;
-	U32 i, strLen;
-
-	string = *(HEAP_PTR*)pParams;
-	if (string != NULL) {
-#define SUB_LEN 128
-		unsigned char str8[SUB_LEN+1] = {};
-		U32 start = 0;
-		str = SystemString_GetString(string, &strLen);
-		while (strLen > 0) {
-			int len = strLen > SUB_LEN ? SUB_LEN : strLen;
-			memcpy(str8, str, len);
-		}
-	}
+tAsyncCall* System_Enum_Internal_GetValue(PTR pThis_, PTR pParams, PTR pReturnValue) {
+	*(U32*)pReturnValue = *(U32*)pThis_;
 
 	return NULL;
 }
 
-static U32 Internal_ReadKey_Check(PTR pThis_, PTR pParams, PTR pReturnValue, tAsyncCall *pAsync) {
-	*(U32*)pReturnValue = 0xFFFFFFFF;
-	return 1;
-}
+tAsyncCall* System_Enum_Internal_GetInfo(PTR pThis_, PTR pParams, PTR pReturnValue) {
+	tMD_TypeDef *pEnumType = RuntimeType_DeRef((PTR)((tMD_TypeDef**)pParams)[0]);
+	U32 i, retIndex;
+	HEAP_PTR names, values;
 
-tAsyncCall* System_Console_Internal_ReadKey(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	tAsyncCall *pAsync = TMALLOC(tAsyncCall);
+	// An enum type always has just one non-literal field, with all other fields being the values.
+	names = SystemArray_NewVector(types[TYPE_SYSTEM_ARRAY_STRING], pEnumType->numFields - 1);
+	values = SystemArray_NewVector(types[TYPE_SYSTEM_ARRAY_INT32], pEnumType->numFields - 1);
+	
+	for (i=0, retIndex=0; i<pEnumType->numFields; i++) {
+		tMD_FieldDef *pField = pEnumType->ppFields[i];
+		HEAP_PTR name;
+		I32 value;
 
-	pAsync->sleepTime = -1;
-	pAsync->checkFn = Internal_ReadKey_Check;
-	pAsync->state = NULL;
+		if (!FIELD_ISLITERAL(pField)) {
+			continue;
+		}
 
-	return pAsync;
-}
+		name = SystemString_FromCharPtrASCII(pField->name);
+		SystemArray_StoreElement(names, retIndex, (PTR)&name);
+		MetaData_GetConstant(pField->pMetaData, pField->tableIndex, (PTR)&value);
+		SystemArray_StoreElement(values, retIndex, (PTR)&value);
+		retIndex++;
+	}
 
-tAsyncCall* System_Console_Internal_KeyAvailable(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	*(U32*)pReturnValue = 0;
+	*(((HEAP_PTR**)pParams)[1]) = names;
+	*(((HEAP_PTR**)pParams)[2]) = values;
+
 	return NULL;
 }

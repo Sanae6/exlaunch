@@ -18,53 +18,45 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "Compat.hpp"
-#include "Sys.hpp"
+#if !defined(__SYS_H)
+#define __SYS_H
 
-#include "System.String.hpp"
+#include "Config.hpp"
+#include "types.h"
+
+#ifdef _DEBUG
+#define Assert(cond) if (!(cond)) Crash("Assert failed: %s, line %d", __FILE__, __LINE__);
+#else
+#define Assert(cond)
+#endif
+
+#define FAKE_RETURN EXL_ABORT(0x424)
+
+#define INTERNALCALL_PARAM(ofs, type) *(type*)(pParams + ofs)
 
 #include "MetaData.hpp"
-#include "Types.hpp"
-#include "Type.hpp"
 
-#include "nn/util.h"
+void Crash(char *pMsg, ...);
 
-tAsyncCall* System_Console_Write(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	HEAP_PTR string;
-	STRING2 str;
-	U32 i, strLen;
+extern U32 logLevel;
+void log_f(U32 level, char *pMsg, ...);
 
-	string = *(HEAP_PTR*)pParams;
-	if (string != NULL) {
-#define SUB_LEN 128
-		unsigned char str8[SUB_LEN+1] = {};
-		U32 start = 0;
-		str = SystemString_GetString(string, &strLen);
-		while (strLen > 0) {
-			int len = strLen > SUB_LEN ? SUB_LEN : strLen;
-			memcpy(str8, str, len);
-		}
-	}
+char* Sys_GetMethodDesc(tMD_MethodDef *pMethod);
 
-	return NULL;
+void Sys_Init();
+
+namespace dna {
+    void* malloc(size_t size);
+    void free(void* memory);
 }
+void* mallocForever(U32 size);
 
-static U32 Internal_ReadKey_Check(PTR pThis_, PTR pParams, PTR pReturnValue, tAsyncCall *pAsync) {
-	*(U32*)pReturnValue = 0xFFFFFFFF;
-	return 1;
-}
+char* stringOrNull(char* str);
 
-tAsyncCall* System_Console_Internal_ReadKey(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	tAsyncCall *pAsync = TMALLOC(tAsyncCall);
+U64 msTime();
+#if defined(DIAG_METHOD_CALLS) || defined(DIAG_OPCODE_TIMES) || defined(DIAG_GC) || defined(DIAG_TOTAL_TIME)
+U64 microTime();
+#endif
+void SleepMS(U32 ms);
 
-	pAsync->sleepTime = -1;
-	pAsync->checkFn = Internal_ReadKey_Check;
-	pAsync->state = NULL;
-
-	return pAsync;
-}
-
-tAsyncCall* System_Console_Internal_KeyAvailable(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	*(U32*)pReturnValue = 0;
-	return NULL;
-}
+#endif

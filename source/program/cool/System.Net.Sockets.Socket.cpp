@@ -18,17 +18,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "Compat.h"
-#include "Sys.h"
+#include "Compat.hpp"
+#include "Sys.hpp"
 
-#include "System.Net.Sockets.Socket.h"
+#include "System.Net.Sockets.Socket.hpp"
 
-#include "System.Array.h"
+#include "System.Array.hpp"
 
 #include "nn/nifm.h"
 #include "nn/socket.h"
 #include "syssocket/sockdefines.h"
-#include "inet/protocoltypes.h"
+// #include "inet/protocoltypes.h"
+#include "lib/nx/result.h"
+
 
 void Socket_Init() {
 	nn::nifm::Initialize();
@@ -108,12 +110,11 @@ static U32 Accept_Check(PTR pThis_, PTR pParams, PTR pReturnValue, tAsyncCall *p
 	newS = (int)nn::socket::Accept(s, NULL, 0);
 	if (newS == -1) {
 		// Blocked or error
-		int err = newS;
-		if (err == WOULD) {
+		if (newS == EWOULDBLOCK) {
 			return 0;
 		} else {
 			*(U32*)pReturnValue = 0;
-			*pError = err;
+			*pError = newS;
 			return 1;
 		}
 	} else {
@@ -137,48 +138,33 @@ tAsyncCall* System_Net_Sockets_Internal_Accept(PTR pThis_, PTR pParams, PTR pRet
 }
 
 static U32 Connect_Check(PTR pThis_, PTR pParams, PTR pReturnValue, tAsyncCall *pAsync) {
-	struct sockaddr_in sa;
-	int r;
+	struct sockaddr sa;
+	Result r;
 
 	int s = INTERNALCALL_PARAM(0, int);
 	U32 addr = INTERNALCALL_PARAM(4, U32);
 	U32 port = INTERNALCALL_PARAM(8, U32);
 	U32 *pError = INTERNALCALL_PARAM(12, U32*);
 
-	sa.sin_family = AF_INET;
-#ifdef _WIN32
-	sa.sin_addr.S_un.S_addr = addr;
-#else
-	sa.sin_addr.s_addr = addr;
-#endif
-	sa.sin_port = htons(port);
+	sa.family = AF_INET;
+	sa.address.data = addr;
+	sa.port = nn::socket::InetHtons(port);
 
-	r = connect(s, (struct sockaddr*)&sa, sizeof(sa));
-	//printf("Connect_Check: r=%d\n", r);
+	r = nn::socket::Connect(s, (struct sockaddr*)&sa, sizeof(sa));
 	if (r == 0) {
 		*pError = 0;
 		return 1;
 	} else {
-		int err = ERRNO;
-		//printf("Connect_Check: errno=%d\n", err);
-#ifdef _WIN32
-		if (err == WSAEINVAL || err == WSAEWOULDBLOCK || err == WSAEALREADY) {
-#else
-		if (err == EINPROGRESS || err == EALREADY) {
-#endif
+		if (r == EINPROGRESS || r == EALREADY) {
 			// Still waiting for connection
 			return 0;
 		} else {
-#ifdef _WIN32
-			if (err == WSAEISCONN) {
-#else
-			if (err == EISCONN) {
-#endif
+			if (r == EISCONN) {
 				// The connection is fine
-				err = 0;
+				r = 0;
 			}
 			// Connection failed
-			*pError = err;
+			*pError = r;
 			return 1;
 		}
 	}
@@ -205,7 +191,7 @@ struct tSendRecvState_ {
 
 static U32 Receive_Check(PTR pThis_, PTR pParams, PTR pReturnValue, tAsyncCall *pAsync) {
 	PTR buffer;
-	int r;
+	Result r;
 	tSendRecvState *pState = (tSendRecvState*)pAsync->state;
 
 	int s = INTERNALCALL_PARAM(0, int);
@@ -217,7 +203,7 @@ static U32 Receive_Check(PTR pThis_, PTR pParams, PTR pReturnValue, tAsyncCall *
 
 	buffer = SystemArray_GetElements(bufferArray) + ofs + pState->count;
 
-	r = recv(s, buffer, size, flags);
+	r = nn::socket::Recv(s, buffer, size, flags);
 
 	if (r > 0) {
 		pState->count += r;
@@ -236,7 +222,7 @@ static U32 Receive_Check(PTR pThis_, PTR pParams, PTR pReturnValue, tAsyncCall *
 		*pError = 0;
 		return 1;
 	} else {
-		int err = ERRNO;
+		int err = (int)r;
 	//printf("Receive_Check: errno=%d\n", err);
 #ifdef _WIN32
 		if (err == WSAEINPROGRESS || err == WSAEWOULDBLOCK) {
@@ -300,17 +286,11 @@ static U32 Send_Check(PTR pThis_, PTR pParams, PTR pReturnValue, tAsyncCall *pAs
 			return 0;
 		}
 	} else {
-		int err = ERRNO;
-printf("Send_Check: errno=%d\n", err);
-#ifdef _WIN32
-		if (err == WSAEINPROGRESS || err == WSAEWOULDBLOCK) {
-#else
-		if (err == EAGAIN) {
-#endif
+		if (r == EAGAIN) {
 			return 0;
 		} else {
 			*(U32*)pReturnValue = pState->count;
-			*pError = err;
+			*pError = r;
 			return 1;
 		}
 	}

@@ -21,50 +21,33 @@
 #include "Compat.hpp"
 #include "Sys.hpp"
 
-#include "System.String.hpp"
+#include "System.Array.hpp"
 
-#include "MetaData.hpp"
 #include "Types.hpp"
+#include "MetaData.hpp"
+#include "Heap.hpp"
 #include "Type.hpp"
 
-#include "nn/util.h"
-
-tAsyncCall* System_Console_Write(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	HEAP_PTR string;
-	STRING2 str;
-	U32 i, strLen;
-
-	string = *(HEAP_PTR*)pParams;
-	if (string != NULL) {
-#define SUB_LEN 128
-		unsigned char str8[SUB_LEN+1] = {};
-		U32 start = 0;
-		str = SystemString_GetString(string, &strLen);
-		while (strLen > 0) {
-			int len = strLen > SUB_LEN ? SUB_LEN : strLen;
-			memcpy(str8, str, len);
-		}
-	}
-
+tAsyncCall* System_GC_Collect(PTR pThis_, PTR pParams, PTR pReturnValue) {
+	Heap_GarbageCollect();
 	return NULL;
 }
 
-static U32 Internal_ReadKey_Check(PTR pThis_, PTR pParams, PTR pReturnValue, tAsyncCall *pAsync) {
-	*(U32*)pReturnValue = 0xFFFFFFFF;
-	return 1;
+tAsyncCall* System_GC_Internal_CollectionCount(PTR pThis_, PTR pParams, PTR pReturnValue) {
+	*(U32*)pReturnValue = Heap_NumCollections();
+	return NULL;
 }
 
-tAsyncCall* System_Console_Internal_ReadKey(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	tAsyncCall *pAsync = TMALLOC(tAsyncCall);
-
-	pAsync->sleepTime = -1;
-	pAsync->checkFn = Internal_ReadKey_Check;
-	pAsync->state = NULL;
-
-	return pAsync;
+tAsyncCall* System_GC_GetTotalMemory(PTR pThis_, PTR pParams, PTR pReturnValue) {
+	if (*(U32*)pParams) {
+		Heap_GarbageCollect();
+	}
+	*(U64*)pReturnValue = Heap_GetTotalMemory();
+	return NULL;
 }
 
-tAsyncCall* System_Console_Internal_KeyAvailable(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	*(U32*)pReturnValue = 0;
+tAsyncCall* System_GC_SuppressFinalize(PTR pThis_, PTR pParams, PTR pReturnValue) {
+	HEAP_PTR obj = ((HEAP_PTR*)pParams)[0];
+	Heap_UnmarkFinalizer(obj);
 	return NULL;
 }

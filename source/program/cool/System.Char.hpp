@@ -18,53 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "Compat.hpp"
-#include "Sys.hpp"
+#if !defined(__SYSTEM_CHAR_H)
+#define __SYSTEM_CHAR_H
 
-#include "System.String.hpp"
-
-#include "MetaData.hpp"
 #include "Types.hpp"
-#include "Type.hpp"
 
-#include "nn/util.h"
+tAsyncCall* System_Char_GetUnicodeCategory(PTR pThis_, PTR pParams, PTR pReturnValue);
+tAsyncCall* System_Char_ToLowerInvariant(PTR pThis_, PTR pParams, PTR pReturnValue);
+tAsyncCall* System_Char_ToUpperInvariant(PTR pThis_, PTR pParams, PTR pReturnValue);
 
-tAsyncCall* System_Console_Write(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	HEAP_PTR string;
-	STRING2 str;
-	U32 i, strLen;
-
-	string = *(HEAP_PTR*)pParams;
-	if (string != NULL) {
-#define SUB_LEN 128
-		unsigned char str8[SUB_LEN+1] = {};
-		U32 start = 0;
-		str = SystemString_GetString(string, &strLen);
-		while (strLen > 0) {
-			int len = strLen > SUB_LEN ? SUB_LEN : strLen;
-			memcpy(str8, str, len);
-		}
-	}
-
-	return NULL;
-}
-
-static U32 Internal_ReadKey_Check(PTR pThis_, PTR pParams, PTR pReturnValue, tAsyncCall *pAsync) {
-	*(U32*)pReturnValue = 0xFFFFFFFF;
-	return 1;
-}
-
-tAsyncCall* System_Console_Internal_ReadKey(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	tAsyncCall *pAsync = TMALLOC(tAsyncCall);
-
-	pAsync->sleepTime = -1;
-	pAsync->checkFn = Internal_ReadKey_Check;
-	pAsync->state = NULL;
-
-	return pAsync;
-}
-
-tAsyncCall* System_Console_Internal_KeyAvailable(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	*(U32*)pReturnValue = 0;
-	return NULL;
-}
+#endif

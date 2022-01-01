@@ -21,50 +21,28 @@
 #include "Compat.hpp"
 #include "Sys.hpp"
 
-#include "System.String.hpp"
+#include "Finalizer.hpp"
 
-#include "MetaData.hpp"
-#include "Types.hpp"
-#include "Type.hpp"
+static HEAP_PTR *ppToFinalize;
+static int toFinalizeOfs, toFinalizeCapacity;
 
-#include "nn/util.h"
+void Finalizer_Init() {
+	toFinalizeCapacity = 4;
+	ppToFinalize = (HEAP_PTR*)malloc(toFinalizeCapacity * sizeof(void*));
+	toFinalizeOfs = 0;
+}
 
-tAsyncCall* System_Console_Write(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	HEAP_PTR string;
-	STRING2 str;
-	U32 i, strLen;
-
-	string = *(HEAP_PTR*)pParams;
-	if (string != NULL) {
-#define SUB_LEN 128
-		unsigned char str8[SUB_LEN+1] = {};
-		U32 start = 0;
-		str = SystemString_GetString(string, &strLen);
-		while (strLen > 0) {
-			int len = strLen > SUB_LEN ? SUB_LEN : strLen;
-			memcpy(str8, str, len);
-		}
+void AddFinalizer(HEAP_PTR ptr) {
+	if (toFinalizeOfs >= toFinalizeCapacity) {
+		toFinalizeCapacity <<= 1;
+		ppToFinalize = realloc(ppToFinalize, toFinalizeCapacity * sizeof(void*));
 	}
-
-	return NULL;
+	ppToFinalize[toFinalizeOfs++] = ptr;
 }
 
-static U32 Internal_ReadKey_Check(PTR pThis_, PTR pParams, PTR pReturnValue, tAsyncCall *pAsync) {
-	*(U32*)pReturnValue = 0xFFFFFFFF;
-	return 1;
-}
-
-tAsyncCall* System_Console_Internal_ReadKey(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	tAsyncCall *pAsync = TMALLOC(tAsyncCall);
-
-	pAsync->sleepTime = -1;
-	pAsync->checkFn = Internal_ReadKey_Check;
-	pAsync->state = NULL;
-
-	return pAsync;
-}
-
-tAsyncCall* System_Console_Internal_KeyAvailable(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	*(U32*)pReturnValue = 0;
-	return NULL;
+HEAP_PTR GetNextFinalizer() {
+	if (toFinalizeOfs == 0) {
+		return NULL;
+	}
+	return ppToFinalize[--toFinalizeOfs];
 }

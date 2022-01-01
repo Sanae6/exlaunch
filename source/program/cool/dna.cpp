@@ -18,17 +18,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "Compat.h"
-#include "Sys.h"
+#include "Compat.hpp"
+#include "Sys.hpp"
 
-#include "CLIFile.h"
-#include "MetaData.h"
-#include "Type.h"
-#include "Heap.h"
-#include "Finalizer.h"
-#include "System.Net.Sockets.Socket.h"
-#include "MethodState.h"
-#include "lib/nx/abort.h"
+#include "CLIFile.hpp"
+#include "MetaData.hpp"
+#include "Type.hpp"
+#include "Heap.hpp"
+#include "Finalizer.hpp"
+#include "System.Net.Sockets.Socket.hpp"
+#include "MethodState.hpp"
+#include "lib/diag/abort.hpp"
 #include "lib/logger.hpp"
 
 static void ShowUsage() {
@@ -38,7 +38,7 @@ static void ShowUsage() {
 	exl::logger::log("\t-v  : Verbose output of files loaded and GC statistics\n");
 	exl::logger::log("\t-vv : More verbose output, including methods JITted and types/arrays/generics use\n");
 	exl::logger::log("\n");
-	EXL_ABORT(0x423);
+	// EXL_ABORT(0x423);
 }
 
 void DNA_Init() {

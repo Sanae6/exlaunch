@@ -21,50 +21,50 @@
 #include "Compat.hpp"
 #include "Sys.hpp"
 
-#include "System.String.hpp"
+#include "System.Environment.hpp"
 
-#include "MetaData.hpp"
-#include "Types.hpp"
 #include "Type.hpp"
+#include "System.String.hpp"
+#include "Heap.hpp"
 
-#include "nn/util.h"
+#include <time.h>
 
-tAsyncCall* System_Console_Write(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	HEAP_PTR string;
-	STRING2 str;
-	U32 i, strLen;
-
-	string = *(HEAP_PTR*)pParams;
-	if (string != NULL) {
-#define SUB_LEN 128
-		unsigned char str8[SUB_LEN+1] = {};
-		U32 start = 0;
-		str = SystemString_GetString(string, &strLen);
-		while (strLen > 0) {
-			int len = strLen > SUB_LEN ? SUB_LEN : strLen;
-			memcpy(str8, str, len);
-		}
-	}
+tAsyncCall* System_Environment_get_TickCount(PTR pThis_, PTR pParams, PTR pReturnValue) {
+	I32 t;
+	
+	t = (I32)msTime();
+	*(I32*)pReturnValue = t;
 
 	return NULL;
 }
 
-static U32 Internal_ReadKey_Check(PTR pThis_, PTR pParams, PTR pReturnValue, tAsyncCall *pAsync) {
-	*(U32*)pReturnValue = 0xFFFFFFFF;
-	return 1;
+tAsyncCall* System_Environment_GetOSVersionString(PTR pThis_, PTR pParams, PTR pReturnValue) {
+	static HEAP_PTR versionString = NULL;
+	if (versionString == NULL) {
+		char ver[64];
+#ifdef _WIN32
+		OSVERSIONINFO osVer;
+		osVer.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+		GetVersionEx(&osVer);
+		sprintf(ver, "%d.%d.%d", osVer.dwMajorVersion, osVer.dwMinorVersion, osVer.dwBuildNumber);
+#else
+		strcpy(ver, "0.0.0");
+#endif
+		versionString = SystemString_FromCharPtrASCII(ver);
+		Heap_MakeUndeletable(versionString);
+	}
+	*(HEAP_PTR*)pReturnValue = versionString;
+	return NULL;
 }
 
-tAsyncCall* System_Console_Internal_ReadKey(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	tAsyncCall *pAsync = TMALLOC(tAsyncCall);
-
-	pAsync->sleepTime = -1;
-	pAsync->checkFn = Internal_ReadKey_Check;
-	pAsync->state = NULL;
-
-	return pAsync;
-}
-
-tAsyncCall* System_Console_Internal_KeyAvailable(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	*(U32*)pReturnValue = 0;
+tAsyncCall* System_Environment_get_Platform(PTR pThis_, PTR pParams, PTR pReturnValue) {
+#ifdef _WIN32
+	OSVERSIONINFO osVer;
+	osVer.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+	GetVersionEx(&osVer);
+	*(U32*)pReturnValue = (osVer.dwPlatformId == VER_PLATFORM_WIN32_NT)?2:1; // _WIN32NT:_WIN32Windows
+#else
+	*(U32*)pReturnValue = 4; // UNIX
+#endif
 	return NULL;
 }

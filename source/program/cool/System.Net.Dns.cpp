@@ -21,50 +21,43 @@
 #include "Compat.hpp"
 #include "Sys.hpp"
 
+#include "System.Net.Dns.hpp"
+
+#include "Type.hpp"
+#include "System.Array.hpp"
 #include "System.String.hpp"
 
-#include "MetaData.hpp"
-#include "Types.hpp"
-#include "Type.hpp"
+#ifndef _WIN32
+#include <netdb.h>
+#endif
 
-#include "nn/util.h"
+tAsyncCall* System_Net_Dns_Internal_GetHostEnt(PTR pThis_, PTR pParams, PTR pReturnValue) {
+	struct hostent *pHostEnt;
+	U32 i, len;
+	STRING2 name2;
+	HEAP_PTR retArray;
+	U8 nameU8[256];
 
-tAsyncCall* System_Console_Write(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	HEAP_PTR string;
-	STRING2 str;
-	U32 i, strLen;
+	HEAP_PTR name = INTERNALCALL_PARAM(0, STRING);
+	HEAP_PTR *pHostName = INTERNALCALL_PARAM(4, STRING*);
 
-	string = *(HEAP_PTR*)pParams;
-	if (string != NULL) {
-#define SUB_LEN 128
-		unsigned char str8[SUB_LEN+1] = {};
-		U32 start = 0;
-		str = SystemString_GetString(string, &strLen);
-		while (strLen > 0) {
-			int len = strLen > SUB_LEN ? SUB_LEN : strLen;
-			memcpy(str8, str, len);
-		}
+	name2 = SystemString_GetString(name, &len);
+	for (i=0; i<len && i<256; i++) {
+		nameU8[i] = (U8)name2[i];
+	}
+	nameU8[i] = 0;
+	pHostEnt = gethostbyname(nameU8);
+	*pHostName = SystemString_FromCharPtrASCII(pHostEnt->h_name);
+
+	// Count how many entries there are
+	for (i=0; pHostEnt->h_addr_list[i] != NULL; i++);
+
+	retArray = SystemArray_NewVector(types[TYPE_SYSTEM_ARRAY_INT32], i);
+	*(HEAP_PTR*)pReturnValue = retArray;
+	for (i=0; pHostEnt->h_addr_list[i] != NULL; i++) {
+		SystemArray_StoreElement(retArray, i, pHostEnt->h_addr_list[i]);
 	}
 
 	return NULL;
-}
 
-static U32 Internal_ReadKey_Check(PTR pThis_, PTR pParams, PTR pReturnValue, tAsyncCall *pAsync) {
-	*(U32*)pReturnValue = 0xFFFFFFFF;
-	return 1;
-}
-
-tAsyncCall* System_Console_Internal_ReadKey(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	tAsyncCall *pAsync = TMALLOC(tAsyncCall);
-
-	pAsync->sleepTime = -1;
-	pAsync->checkFn = Internal_ReadKey_Check;
-	pAsync->state = NULL;
-
-	return pAsync;
-}
-
-tAsyncCall* System_Console_Internal_KeyAvailable(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	*(U32*)pReturnValue = 0;
-	return NULL;
 }

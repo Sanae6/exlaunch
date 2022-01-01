@@ -107,7 +107,7 @@ namespace nn
         Result GetBufferSize(size_t*, const void*);
 
         Result RegisterModuleInfo(RegistrationInfo*, void const*);
-        Result RegisterModuleInfo(RegistrationInfo*, void const*, uint);
+        Result RegisterModuleInfo(RegistrationInfo*, void const*, unsigned int);
         Result UnregisterModuleInfo(RegistrationInfo*, void const*);
     };
 
