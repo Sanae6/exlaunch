@@ -22,7 +22,7 @@
 #define __PINVOKE_H
 
 #include "MetaData.hpp"
-#include "JIT.hpp"
+#include "JITMain.hpp"
 //#include "String.hpp"
 
 //extern char* invokeJsFunc(STRING libName, STRING funcName, STRING arg0);

@@ -36,9 +36,9 @@
 #undef DIAG_OPCODE_TIMES
 
 // Count how many times each .NET opcode is used
-#ifdef _DEBUG
+// #ifdef _DEBUG
 #undef DIAG_OPCODE_USE
-#endif
+// #endif
 
 // Measure how much time is spent in the garbage collector
 #undef DIAG_GC

@@ -49,7 +49,7 @@ tMD_TypeDef* Generics_GetGenericTypeFromSig
 	MetaData_Fill_TypeDef(pCoreType, ppCallingClassTypeArgs, ppCallingMethodTypeArgs); //NULL, NULL);
 
 	numTypeArgs = MetaData_DecodeSigEntry(pSig);
-	ppTypeArgs = (tMD_TypeDef**)malloc(numTypeArgs * sizeof(tMD_TypeDef*));
+	ppTypeArgs = (tMD_TypeDef**)dna::malloc(numTypeArgs * sizeof(tMD_TypeDef*));
 	for (i=0; i<numTypeArgs; i++) {
 		ppTypeArgs[i] = Type_GetTypeFromSig(pMetaData, pSig, ppCallingClassTypeArgs, ppCallingMethodTypeArgs);
 		if (ppTypeArgs[i] != NULL) {
@@ -58,7 +58,7 @@ tMD_TypeDef* Generics_GetGenericTypeFromSig
 	}
 
 	pRet = Generics_GetGenericTypeFromCoreType(pCoreType, numTypeArgs, ppTypeArgs);
-	free(ppTypeArgs);
+	dna::free(ppTypeArgs);
 	return pRet;
 }
 
@@ -82,7 +82,7 @@ tMD_TypeDef* Generics_GetGenericTypeFromCoreType(tMD_TypeDef *pCoreType, U32 num
 	tGenericInstance *pInst;
 	tMD_TypeDef *pTypeDef;
 	U32 i;
-	unsigned char name[2048];
+	char name[2048];
 	tMetaData *pMetaData;
 
 	pMetaData = pCoreType->pMetaData;
@@ -118,13 +118,13 @@ tMD_TypeDef* Generics_GetGenericTypeFromCoreType(tMD_TypeDef *pCoreType, U32 num
 			strcat(name, ",");
 		}
 		if (ppTypeArgs[i] != NULL) {
-			sprintf(strchr(name, 0), "%s.%s", ppTypeArgs[i]->nameSpace, ppTypeArgs[i]->name);
+			nn::util::SNPrintf(strchr(name, 0), 2048, "%s.%s", ppTypeArgs[i]->nameSpace, ppTypeArgs[i]->name);
 		} else {
 			tMD_GenericParam *pGenericParam = FindGenericParam(pCoreType, i);
 			if (pGenericParam != NULL) {
-				sprintf(strchr(name, 0), pGenericParam->name);
+				nn::util::SNPrintf(strchr(name, 0), 2048, pGenericParam->name);
 			} else {
-				sprintf(strchr(name, 0), "???");
+				nn::util::SNPrintf(strchr(name, 0), 2048, "???");
 			}
 		}
 	}
@@ -173,7 +173,7 @@ tMD_MethodDef* Generics_GetMethodDefFromSpec
 	sig = MetaData_GetBlob(pMethodSpec->instantiation, NULL);
 	MetaData_DecodeSigEntry(&sig); // always 0x0a
 	argCount = MetaData_DecodeSigEntry(&sig);
-	ppTypeArgs = malloc(argCount * sizeof(tMD_TypeDef*));
+	ppTypeArgs = dna::malloc(argCount * sizeof(tMD_TypeDef*));
 
 	for (i=0; i<argCount; i++) {
 		tMD_TypeDef *pArgType;
@@ -183,7 +183,7 @@ tMD_MethodDef* Generics_GetMethodDefFromSpec
 	}
 
 	pMethod = Generics_GetMethodDefFromCoreMethod(pCoreMethod, pCoreMethod->pParentType, argCount, ppTypeArgs);
-	free(ppTypeArgs);
+	dna::free(ppTypeArgs);
 
 	return pMethod;
 }

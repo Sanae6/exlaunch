@@ -26,9 +26,10 @@
 #include "nn/util.h"
 #include "lib/logger.hpp"
 #include "lib/diag/assert.hpp"
+#include "Sys.hpp"
 
 #define TMALLOC(t) (t*)dna::malloc(sizeof(t))
 #define TMALLOCFOREVER(t) (t*)mallocForever(sizeof(t))
 
-#define LIB_PREFIX "romfs:/dnany/"
+#define LIB_PREFIX "romfs:/NetData/"
 #define LIB_SUFFIX "nro"

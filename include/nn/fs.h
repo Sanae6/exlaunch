@@ -28,6 +28,7 @@ enum OpenMode
 {
     OpenMode_Read       = 1 << 0,
     OpenMode_Write      = 1 << 1,
+    OpenMode_Binary     = 1 << 16,
     OpenMode_ReadWrite  = OpenMode_Read | OpenMode_Write
 };
 

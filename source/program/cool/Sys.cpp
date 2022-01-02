@@ -85,6 +85,10 @@ void* dna::malloc(size_t size) {
 	return allocator->Allocate(size);
 }
 
+void* dna::realloc(void* address, size_t size) {
+	return allocator->Reallocate(address, size);
+}
+
 void dna::free(void* address) {
 	allocator->Free(address);
 }

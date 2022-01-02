@@ -5,4 +5,4 @@
 #error "Cannot use nnSdk when not as a module!"
 #endif
 
-#include "nn/fs.hpp"
+#include "nn/fs.h"

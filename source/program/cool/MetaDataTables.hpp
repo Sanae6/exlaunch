@@ -29,7 +29,7 @@ typedef struct tMD_MethodSpec_ tMD_MethodSpec;
 typedef struct tMD_ImplMap_ tMD_ImplMap;
 
 #include "Types.hpp"
-#include "JIT.hpp"
+#include "JITMain.hpp"
 #include "MetaData.hpp"
 #include "Generics.hpp"
 

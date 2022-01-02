@@ -28,14 +28,14 @@ static int toFinalizeOfs, toFinalizeCapacity;
 
 void Finalizer_Init() {
 	toFinalizeCapacity = 4;
-	ppToFinalize = (HEAP_PTR*)malloc(toFinalizeCapacity * sizeof(void*));
+	ppToFinalize = (HEAP_PTR*) dna::malloc(toFinalizeCapacity * sizeof(void*));
 	toFinalizeOfs = 0;
 }
 
 void AddFinalizer(HEAP_PTR ptr) {
 	if (toFinalizeOfs >= toFinalizeCapacity) {
 		toFinalizeCapacity <<= 1;
-		ppToFinalize = realloc(ppToFinalize, toFinalizeCapacity * sizeof(void*));
+		ppToFinalize = (HEAP_PTR*) dna::realloc(ppToFinalize, toFinalizeCapacity * sizeof(void*));
 	}
 	ppToFinalize[toFinalizeOfs++] = ptr;
 }

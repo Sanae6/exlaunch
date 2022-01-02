@@ -117,7 +117,7 @@ static void Thread_Delete(tThread *pThis) {
 	tThreadStack *pStack = pThis->pThreadStack;
 	while (pStack != NULL) {
 		tThreadStack *pNextStack = pStack->pNext;
-		free(pStack);
+		dna::free(pStack);
 		pStack = pNextStack;
 	}
 	Heap_MakeDeletable((HEAP_PTR)pThis);
@@ -228,7 +228,7 @@ I32 Thread_Execute() {
                         // The IO has unblocked, and the return value is ready.
                         // So delete the async object.
                         // TODO: The async->state object needs to be deleted somehow (maybe)
-                        free(pAsync);
+                        dna::free(pAsync);
                         // And remove it from the thread
                         pThread->pAsync = NULL;
                         break;
@@ -255,7 +255,7 @@ I32 Thread_Execute() {
 						// The IO has unblocked, and the return value is ready.
 						// So delete the async object.
 						// TODO: The async->state object needs to be deleted somehow (maybe)
-						free(pAsync);
+						dna::free(pAsync);
 						// And remove it from the thread
 						pThread->pAsync = NULL;
 						break;

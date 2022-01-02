@@ -110,14 +110,14 @@ tAsyncCall* Reflection_MemberInfo_GetCustomAttributes(PTR pThis_, PTR pParams, P
 							dotNetString = NULL;
 						} else {
 							// Not null (but maybe empty)
-							char* buf = malloc(numUtf8Bytes + 1);
+							char* buf = dna::malloc(numUtf8Bytes + 1);
 							for (U32 byteIndex = 0; byteIndex < numUtf8Bytes; byteIndex++) {
 								buf[byteIndex] = *((char*)blob);
 								blob += sizeof(char);
 							}
 							buf[numUtf8Bytes] = 0;
-							dotNetString = SystemString_FromCharPtrASCII(buf); // TODO: Handle non-ASCII UTF8, probably by converting the raw UTF8 data to UTF16
-							free(buf);
+							dotNetString = SystemString_FromCharPtrASCII((U8*)buf); // TODO: Handle non-ASCII UTF8, probably by converting the raw UTF8 data to UTF16
+							dna::free(buf);
 						}
 						SystemArray_StoreElement(pConstructorArgsArray, argIndex - 1, (PTR)&dotNetString);
 					} else {

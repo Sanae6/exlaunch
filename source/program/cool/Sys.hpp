@@ -47,7 +47,8 @@ void Sys_Init();
 
 namespace dna {
     void* malloc(size_t size);
-    void free(void* memory);
+    void* realloc(void* address, size_t size);
+    void free(void* address);
 }
 void* mallocForever(U32 size);
 

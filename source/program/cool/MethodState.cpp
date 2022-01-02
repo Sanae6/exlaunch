@@ -23,7 +23,7 @@
 
 #include "Thread.hpp"
 #include "MethodState.hpp"
-#include "JIT.hpp"
+#include "JITMain.hpp"
 
 #ifdef GEN_COMBINED_OPCODES
 
@@ -229,7 +229,7 @@ void MethodState_Delete(tThread *pThread, tMethodState **ppMethodState) {
 	}
 
 	if (pThis->pDelegateParams != NULL) {
-		free(pThis->pDelegateParams);
+		dna::free(pThis->pDelegateParams);
 	}
 
 	// Note that the way the stack free funtion works means that only the 1st allocated chunk

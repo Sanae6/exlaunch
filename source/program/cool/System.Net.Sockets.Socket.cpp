@@ -249,8 +249,8 @@ tAsyncCall* System_Net_Sockets_Internal_Receive(PTR pThis_, PTR pParams, PTR pRe
 	pState->count = 0;
 	ok = Receive_Check(pThis_, pParams, pReturnValue, pAsync);
 	if (ok) {
-		free(pState);
-		free(pAsync);
+		dna::free(pState);
+		dna::free(pAsync);
 		return NULL;
 	} else {
 		return pAsync;
@@ -306,8 +306,8 @@ tAsyncCall* System_Net_Sockets_Internal_Send(PTR pThis_, PTR pParams, PTR pRetur
 	pState->count = 0;
 	ok = Send_Check(pThis_, pParams, pReturnValue, pAsync);
 	if (ok) {
-		free(pState);
-		free(pAsync);
+		dna::free(pState);
+		dna::free(pAsync);
 		return NULL;
 	} else {
 		return pAsync;

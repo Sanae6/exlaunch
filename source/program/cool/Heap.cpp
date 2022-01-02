@@ -270,7 +270,7 @@ static void GarbageCollect() {
 
 	heapRoots.capacity = 64;
 	heapRoots.num = 0;
-	heapRoots.pHeapEntries = malloc(heapRoots.capacity * sizeof(tHeapRootEntry));
+	heapRoots.pHeapEntries = dna::malloc(heapRoots.capacity * sizeof(tHeapRootEntry));
 
 	Thread_GetHeapRoots(&heapRoots);
 	CLIFile_GetHeapRoots(&heapRoots);
@@ -344,7 +344,7 @@ static void GarbageCollect() {
 		}
 	}
 
-	free(heapRoots.pHeapEntries);
+	dna::free(heapRoots.pHeapEntries);
 
 	// Sweep phase
 	// Traverse nodes
@@ -371,14 +371,14 @@ static void GarbageCollect() {
 					// If this object is being targetted by weak-ref(s), handle it
 					if (pNode->pSync != NULL) {
 						RemoveWeakRefTarget(pNode, 0);
-						free(pNode->pSync);
+						dna::free(pNode->pSync);
 					}
 				}
 			} else {
 				// If this object is being targetted by weak-ref(s), handle it
 				if (pNode->pSync != NULL) {
 					RemoveWeakRefTarget(pNode, 1);
-					free(pNode->pSync);
+					dna::free(pNode->pSync);
 				}
 				// Use pSync to point to next entry in this linked-list.
 				//(tHeapEntry*)(pNode->pSync) = pToDelete;
@@ -402,7 +402,7 @@ static void GarbageCollect() {
 		pHeapTreeRoot = TreeRemove(pHeapTreeRoot, pThis);
 		numNodes--;
 		trackHeapSize -= GetSize(pThis) + sizeof(tHeapEntry);
-		free(pThis);
+		dna::free(pThis);
 	}
 
 #ifdef DIAG_GC
@@ -439,7 +439,7 @@ void Heap_SetRoots(tHeapRoots *pHeapRoots, void *pRoots, U32 sizeInBytes) {
 	Assert((sizeInBytes & 0x3) == 0);
 	if (pHeapRoots->num >= pHeapRoots->capacity) {
 		pHeapRoots->capacity <<= 1;
-		pHeapRoots->pHeapEntries = (tHeapRootEntry*)realloc(pHeapRoots->pHeapEntries, pHeapRoots->capacity * sizeof(tHeapRootEntry));
+		pHeapRoots->pHeapEntries = (tHeapRootEntry*)dna::realloc(pHeapRoots->pHeapEntries, pHeapRoots->capacity * sizeof(tHeapRootEntry));
 	}
 	pRootEntry = &pHeapRoots->pHeapEntries[pHeapRoots->num++];
 	pRootEntry->numPointers = sizeInBytes >> 2;
@@ -466,7 +466,7 @@ HEAP_PTR Heap_Alloc(tMD_TypeDef *pTypeDef, U32 size) {
 		}
 	}
 
-	pHeapEntry = (tHeapEntry*)malloc(totalSize);
+	pHeapEntry = (tHeapEntry*)dna::malloc(totalSize);
 	pHeapEntry->pTypeDef = pTypeDef;
 	pHeapEntry->pSync = NULL;
 	pHeapEntry->needToFinalize = (pTypeDef->pFinalizer != NULL);
@@ -531,7 +531,7 @@ static tSync* EnsureSync(tHeapEntry *pHeapEntry) {
 static void DeleteSync(tHeapEntry *pHeapEntry) {
 	if (pHeapEntry->pSync != NULL) {
 		if (pHeapEntry->pSync->count == 0 && pHeapEntry->pSync->weakRef == NULL) {
-			free(pHeapEntry->pSync);
+			dna::free(pHeapEntry->pSync);
 			pHeapEntry->pSync = NULL;
 		}
 	}

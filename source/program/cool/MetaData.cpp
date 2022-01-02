@@ -340,7 +340,7 @@ static void* LoadSingleTable(tMetaData *pThis, tRVA *pRVA, int tableID, void **p
 	}
 
 	// Allocate memory for destination table
-	pDest = pRet = malloc(numRows * rowLen);
+	pDest = (unsigned char*) (pRet = dna::malloc(numRows * rowLen));
 
 	// Load table
 	for (row=0; row<numRows; row++) {
@@ -391,8 +391,8 @@ static void* LoadSingleTable(tMetaData *pThis, tRVA *pRVA, int tableID, void **p
 							unsigned char tag = *pSource & ((1 << tagBits) - 1);
 							int idxIntoTableID = pCoding[tag]; // The actual table index that we're looking for
 							if (idxIntoTableID < 0 || idxIntoTableID > MAX_TABLES) {
-								printf("Error: Bad table index: 0x%02x\n", idxIntoTableID);
-								exit(1);
+								exl::logger::log("Error: Bad table index: 0x%02x\n", idxIntoTableID);
+								EXL_ABORT(0x426);
 							}
 							if (pThis->tables.codedIndex32Bit[ofs]) {
 								// Use 32-bit number
@@ -540,8 +540,8 @@ void MetaData_LoadTables(tMetaData *pThis, tRVA *pRVA, void *pStream, unsigned i
 	for (i=0; i<MAX_TABLES; i++) {
 		if (pThis->tables.numRows[i] > 0) {
 			if (i*4 >= sizeof(tableDefs) || tableDefs[i] == NULL) {
-				printf("No table definition for MetaData table 0x%02x\n", i);
-				exit(1);
+				exl::logger::log("No table definition for MetaData table 0x%02x\n", i);
+				EXL_ABORT(0x425);
 			}
 			pThis->tables.data[i] = LoadSingleTable(pThis, pRVA, i, &pTable);
 		}

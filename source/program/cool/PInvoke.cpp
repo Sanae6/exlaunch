@@ -24,7 +24,7 @@
 #include "PInvoke.hpp"
 #include "MetaData.hpp"
 #include "MetaDataTables.hpp"
-#include "JIT.hpp"
+#include "JITMain.hpp"
 #include "Type.hpp"
 #include "System.String.hpp"
 #include "EvalStack.hpp"
@@ -101,7 +101,7 @@ fnPInvoke PInvoke_GetFunction(tMetaData *pMetaData, tMD_ImplMap *pImplMap) {
 static void* ConvertStringToANSI(HEAP_PTR pHeapEntry) {
 	U32 strLen, i;
 	STRING2 str = SystemString_GetString(pHeapEntry, &strLen);
-	unsigned char *pAnsi = (unsigned char*)malloc(strLen+1);
+	unsigned char *pAnsi = (unsigned char*)dna::malloc(strLen+1);
 	for (i=0; i<strLen; i++) {
 		pAnsi[i] = (unsigned char)str[i];
 	}
@@ -113,7 +113,7 @@ static void* ConvertStringToANSI(HEAP_PTR pHeapEntry) {
 static void* ConvertStringToUnicode(HEAP_PTR pHeapEntry) {
 	U32 strLen;
 	STRING2 str = SystemString_GetString(pHeapEntry, &strLen);
-	unsigned short *pUnicode = (unsigned short*)malloc((strLen+1) << 1);
+	unsigned short *pUnicode = (unsigned short*)dna::malloc((strLen+1) << 1);
 	memcpy(pUnicode, str, strLen << 1);
 	pUnicode[strLen] = 0;
 	return pUnicode;
@@ -281,7 +281,7 @@ U32 PInvoke_Call(tJITCallPInvoke *pCall, PTR pParams, PTR pReturnValue, tThread 
 	*/
 
 	for (i=0; i<_tempMemOfs; i++) {
-		free(_pTempMem[i]);
+		dna::free(_pTempMem[i]);
 	}
 
 	// [Steve edit] Restore previous thread state

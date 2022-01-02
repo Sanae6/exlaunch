@@ -44,11 +44,12 @@ INCLUDES	:=	include
 #---------------------------------------------------------------------------------
 ARCH	:=	-march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fpic -fvisibility=hidden -D__thread='^-^'
 
-CFLAGS	:=	-ggdb -Wall -O3 \
+CFLAGS	:=	-ggdb -Wall -w -O3 \
 			-ffunction-sections \
 			-fdata-sections \
 			-DLOGGER_IP=\"$(LOGGER_IP)\" \
 			-DLOGGER_PORT=$(LOGGER_PORT) \
+			-fpermissive \
 			$(ARCH) \
 			$(DEFINES)
 

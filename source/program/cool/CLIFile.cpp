@@ -31,6 +31,8 @@
 #include "System.Array.hpp"
 #include "System.String.hpp"
 
+#include "nn/fs.h"
+
 // Is this exe/dll file for the .NET virtual machine?
 #define DOT_NET_MACHINE 0x14c
 
@@ -43,7 +45,7 @@ struct tFilesLoaded_ {
 // In .NET Core, the core libraries are split over numerous assemblies. For simplicity,
 // the DNA corlib just puts them in one assembly
 static STRING assembliesMappedToDnaCorlib[] = {
-	"mscorlib"
+	(STRING) "mscorlib"
 	// Also, "System.*" is implemented below
 };
 static int numAssembliesMappedToDnaCorlib = sizeof(assembliesMappedToDnaCorlib)/sizeof(STRING);
@@ -56,8 +58,8 @@ tMetaData* CLIFile_GetMetaDataForLoadedAssembly(unsigned char *pLoadedAssemblyNa
 
 	while (pFiles != NULL) {
 		tCLIFile *pCLIFile = pFiles->pCLIFile;
-		tMD_Assembly *pThisAssembly = MetaData_GetTableRow(pCLIFile->pMetaData, MAKE_TABLE_INDEX(0x20, 1));
-		if (strcmp(pLoadedAssemblyName, pThisAssembly->name) == 0) {
+		tMD_Assembly *pThisAssembly = (tMD_Assembly*)MetaData_GetTableRow(pCLIFile->pMetaData, MAKE_TABLE_INDEX(0x20, 1));
+		if (strcmp((char*)pLoadedAssemblyName, (char*)pThisAssembly->name) == 0) {
 			// Found the correct assembly, so return its meta-data
 			return pCLIFile->pMetaData;
 		}
@@ -74,15 +76,15 @@ tMetaData* CLIFile_GetMetaDataForAssembly(unsigned char *pAssemblyName) {
 	// Where applicable, redirect this assembly lookup into DNA's corlib
 	// (e.g., mscorlib, System.Runtime, etc.)
 	for (int i = 0; i < numAssembliesMappedToDnaCorlib; i++) {
-		if (strcmp(pAssemblyName, assembliesMappedToDnaCorlib[i]) == 0) {
-			pAssemblyName = "corlib";
+		if (strcmp((char*) pAssemblyName, (char*) assembliesMappedToDnaCorlib[i]) == 0) {
+			pAssemblyName = (STRING) "corlib";
 			break;
 		}
 	}
 	
 	// Also redirect System.* into corlib for convenience
-	if (strncmp("System.", pAssemblyName, 7) == 0) {
-		pAssemblyName = "corlib";
+	if (strncmp("System.", (char*) pAssemblyName, 7) == 0) {
+		pAssemblyName = (STRING) "corlib";
 	}
 
 	// Look in already-loaded files first
@@ -93,8 +95,8 @@ tMetaData* CLIFile_GetMetaDataForAssembly(unsigned char *pAssemblyName) {
 
 		pCLIFile = pFiles->pCLIFile;
 		// Get the assembly info - there is only ever one of these in the each file's metadata
-		pThisAssembly = MetaData_GetTableRow(pCLIFile->pMetaData, MAKE_TABLE_INDEX(0x20, 1));
-		if (strcmp(pAssemblyName, pThisAssembly->name) == 0) {
+		pThisAssembly = (tMD_Assembly*) MetaData_GetTableRow(pCLIFile->pMetaData, MAKE_TABLE_INDEX(0x20, 1));
+		if (strcmp((char*) pAssemblyName, (char*) pThisAssembly->name) == 0) {
 			// Found the correct assembly, so return its meta-data
 			return pCLIFile->pMetaData;
 		}
@@ -105,8 +107,8 @@ tMetaData* CLIFile_GetMetaDataForAssembly(unsigned char *pAssemblyName) {
 	{
 		tCLIFile *pCLIFile;
 		unsigned char fileName[256];
-		sprintf(fileName, "romfs:/NetData/%s.dll", pAssemblyName);
-		pCLIFile = CLIFile_Load(fileName);
+		nn::util::SNPrintf((char*) fileName, 256, "romfs:/NetData/%s.dll", pAssemblyName);
+		pCLIFile = CLIFile_Load((char*) fileName);
 		if (pCLIFile == NULL) {
 			Crash("Cannot load required assembly file: %s", fileName);
 		}
@@ -132,24 +134,23 @@ tMD_TypeDef* CLIFile_FindTypeInAllLoadedAssemblies(STRING nameSpace, STRING name
 }
 
 static void* LoadFileFromDisk(char *pFileName) {
-	int f;
+	nn::fs::FileHandle f;
 	void *pData = NULL;
 
-	f = open(pFileName, O_RDONLY|O_BINARY);
-	if (f >= 0) {
-		int len;
-		len = lseek(f, 0, SEEK_END);
-		lseek(f, 0, SEEK_SET);
+	nn::Result rc = nn::fs::OpenFile(&f, pFileName, nn::fs::OpenMode_Read|nn::fs::OpenMode_Binary);
+	if (rc.isSuccess()) {
+		s64 len = 0;
+		rc = nn::fs::GetFileSize(&len, f);
 		// TODO: Change to use mmap() or windows equivilent
 		pData = mallocForever(len);
 		if (pData != NULL) {
-			int r = read(f, pData, len);
-			if (r != len) {
-				free(pData);
+			rc = nn::fs::ReadFile(f, 0, pData, len);
+			if (rc.isFailure()) {
+				dna::free(pData);
 				pData = NULL;
 			}
 		}
-		close(f);
+		nn::fs::CloseFile(f);
 	}
 
 	return pData;
@@ -157,8 +158,8 @@ static void* LoadFileFromDisk(char *pFileName) {
 
 char* GetNullTerminatedString(PTR pData, int* length)
 {
-    *length = strlen(pData) + 1;
-    return pData;
+    *length = strlen((char*) pData) + 1;
+    return (char*) pData;
 }
 
 static unsigned int GetU32(unsigned char *pSource, int* length) {
@@ -237,6 +238,8 @@ static tDebugMetaData* LoadDebugFile(PTR pData) {
     return pRet;
 }
 
+#include <strings.h>
+
 static tCLIFile* LoadPEFile(void *pData) {
 	tCLIFile *pRet = TMALLOC(tCLIFile);
 
@@ -282,12 +285,12 @@ static tCLIFile* LoadPEFile(void *pData) {
 	cliHeaderRVA = *(unsigned int*)&(pPEOptionalHeader[208]);
 	cliHeaderSize = *(unsigned int*)&(pPEOptionalHeader[212]);
 
-	pCLIHeader = RVA_FindData(pRet->pRVA, cliHeaderRVA);
+	pCLIHeader = (unsigned char*) RVA_FindData(pRet->pRVA, cliHeaderRVA);
 
 	metaDataRVA = *(unsigned int*)&(pCLIHeader[8]);
 	metaDataSize = *(unsigned int*)&(pCLIHeader[12]);
 	pRet->entryPoint = *(unsigned int*)&(pCLIHeader[20]);
-	pRawMetaData = RVA_FindData(pRet->pRVA, metaDataRVA);
+	pRawMetaData = (unsigned char*) RVA_FindData(pRet->pRVA, metaDataRVA);
 
 	// Load all metadata
 	{
@@ -398,7 +401,7 @@ tCLIFile* CLIFile_Load(char *pFileName) {
     else {
         log_f(1, "\nLoaded debug file: %s\n", pDebugFileName);
         pRet->pDebugFileName = pDebugFileName;
-        pRet->pMetaData->debugMetadata = LoadDebugFile(pRawDebugFile);
+        pRet->pMetaData->debugMetadata = LoadDebugFile((PTR)pRawDebugFile);
     }
 
 	// Record that we've loaded this file
@@ -422,7 +425,7 @@ I32 CLIFile_Execute(tCLIFile *pThis, int argc, char **argp) {
 	args = SystemArray_NewVector(types[TYPE_SYSTEM_ARRAY_STRING], argc);
 	Heap_MakeUndeletable(args);
 	for (i = 0; i < argc; i++) {
-		HEAP_PTR arg = SystemString_FromCharPtrASCII((char*) argp[i]);
+		HEAP_PTR arg = SystemString_FromCharPtrASCII((U8*) argp[i]);
 		SystemArray_StoreElement(args, i, (PTR)&arg);
 	}
 

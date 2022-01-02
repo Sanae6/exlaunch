@@ -21,7 +21,7 @@
 #include "Compat.hpp"
 #include "Sys.hpp"
 
-#include "JIT.hpp"
+#include "JITMain.hpp"
 
 #include "JIT_OpCodes.hpp"
 #include "CIL_OpCodes.hpp"
@@ -62,8 +62,8 @@ struct tTypeStack_ {
 	U32 maxBytes; // The max size of the stack in bytes
 };
 
-#define InitOps(ops_, initialCapacity) ops_.capacity = initialCapacity; ops_.ofs = 0; ops_.p = malloc((initialCapacity) * sizeof(U32)); ops_.pSequencePoints = malloc((initialCapacity) * sizeof(I32));
-#define DeleteOps(ops_) free(ops_.p); free(ops_.pSequencePoints)
+#define InitOps(ops_, initialCapacity) ops_.capacity = initialCapacity; ops_.ofs = 0; ops_.p = dna::malloc((initialCapacity) * sizeof(U32)); ops_.pSequencePoints = dna::malloc((initialCapacity) * sizeof(I32));
+#define DeleteOps(ops_) dna::free(ops_.p); dna::free(ops_.pSequencePoints)
 
 // Turn this into a MACRO at some point?
 static U32 Translate(U32 op, U32 getDynamic) {
@@ -128,8 +128,8 @@ static void PushU32_(tOps *pOps, U32 v, I32 opSequencePoint) {
 	if (pOps->ofs >= pOps->capacity) {
 		pOps->capacity <<= 1;
 //		printf("a.pOps->p = 0x%08x size=%d\n", pOps->p, pOps->capacity * sizeof(U32));
-		pOps->p = realloc(pOps->p, pOps->capacity * sizeof(U32));
-		pOps->pSequencePoints = realloc(pOps->pSequencePoints, pOps->capacity * sizeof(U32));
+		pOps->p = dna::realloc(pOps->p, pOps->capacity * sizeof(U32));
+		pOps->pSequencePoints = dna::realloc(pOps->pSequencePoints, pOps->capacity * sizeof(U32));
 	}
 	pOps->pSequencePoints[pOps->ofs] = opSequencePoint;
 	pOps->p[pOps->ofs++] = v;
@@ -151,7 +151,7 @@ static tTypeStack* DeepCopyTypeStack(tTypeStack *pToCopy) {
 	pCopy->maxBytes = pToCopy->maxBytes;
 	pCopy->ofs = pToCopy->ofs;
 	if (pToCopy->ofs > 0) {
-		pCopy->ppTypes = malloc(pToCopy->ofs * sizeof(tMD_TypeDef*));
+		pCopy->ppTypes = dna::malloc(pToCopy->ofs * sizeof(tMD_TypeDef*));
 		memcpy(pCopy->ppTypes, pToCopy->ppTypes, pToCopy->ofs * sizeof(tMD_TypeDef*));
 	} else {
 		pCopy->ppTypes = NULL;
@@ -300,13 +300,13 @@ static U32* JITit(tMD_MethodDef *pMethodDef, U8 *pCIL, U32 codeSize, tParameter 
         }
     }
     
-	pJITOffsets = malloc(codeSize * sizeof(U32));
+	pJITOffsets = dna::malloc(codeSize * sizeof(U32));
 	// + 1 to handle cases where the stack is being restored at the last instruction in a method
-	ppTypeStacks = malloc((codeSize + 1) * sizeof(tTypeStack*));
+	ppTypeStacks = dna::malloc((codeSize + 1) * sizeof(tTypeStack*));
 	memset(ppTypeStacks, 0, (codeSize + 1) * sizeof(tTypeStack*));
 	typeStack.maxBytes = 0;
 	typeStack.ofs = 0;
-	typeStack.ppTypes = malloc(maxStack * sizeof(tMD_TypeDef*));
+	typeStack.ppTypes = dna::malloc(maxStack * sizeof(tMD_TypeDef*));
     sequencePointIndex = 0;
 
 	// Set up all exception 'catch' blocks with the correct stack information,
@@ -1650,21 +1650,21 @@ combineDone:
 	// This is the largest number of bytes needed by all objects/value-types on the stack,
 	pJITted->maxStack = typeStack.maxBytes;
 
-	free(typeStack.ppTypes);
+	dna::free(typeStack.ppTypes);
 
 	for (i=0; i<codeSize; i++) {
 		if (ppTypeStacks[i] != NULL) {
-			free(ppTypeStacks[i]->ppTypes);
+			dna::free(ppTypeStacks[i]->ppTypes);
 		}
 	}
-	free(ppTypeStacks);
+	dna::free(ppTypeStacks);
 
 	DeleteOps(branchOffsets);
-	free(pJITOffsets);
+	dna::free(pJITOffsets);
 
 	// Copy ops to some memory of exactly the correct size. To not waste memory.
 	u32Value = ops.ofs * sizeof(U32);
-	pFinalOps = genCombinedOpcodes?malloc(u32Value):mallocForever(u32Value);
+	pFinalOps = genCombinedOpcodes?dna::malloc(u32Value):mallocForever(u32Value);
 	memcpy(pFinalOps, ops.p, u32Value);
 	
 	pJITted->pDebugMetadataEntry = pDebugMetadataEntry;
@@ -1789,7 +1789,7 @@ void JIT_Prepare(tMD_MethodDef *pMethodDef, U32 genCombinedOpcodes) {
 			//pJITted->pExceptionHeaders = (tExceptionHeader*)(pMethodHeader + 4);
 			exSize = numClauses * sizeof(tExceptionHeader);
 			pJITted->pExceptionHeaders =
-				(tExceptionHeader*)(genCombinedOpcodes?malloc(exSize):mallocForever(exSize));
+				(tExceptionHeader*)(genCombinedOpcodes?dna::malloc(exSize):mallocForever(exSize));
 			memcpy(pJITted->pExceptionHeaders, pMethodHeader + 4, exSize);
 		} else {
 			// Thin header
@@ -1801,7 +1801,7 @@ void JIT_Prepare(tMD_MethodDef *pMethodDef, U32 genCombinedOpcodes) {
 			pMethodHeader += 4;
 			//pExHeaders = pJITted->pExceptionHeaders = (tExceptionHeader*)mallocForever(numClauses * sizeof(tExceptionHeader));
 			pExHeaders = pJITted->pExceptionHeaders =
-				(tExceptionHeader*)(genCombinedOpcodes?malloc(exSize):mallocForever(exSize));
+				(tExceptionHeader*)(genCombinedOpcodes?dna::malloc(exSize):mallocForever(exSize));
 			for (i=0; i<numClauses; i++) {
 				pExHeaders[i].flags = ((U16*)pMethodHeader)[0];
 				pExHeaders[i].tryStart = ((U16*)pMethodHeader)[1];
@@ -1839,7 +1839,7 @@ void JIT_Prepare(tMD_MethodDef *pMethodDef, U32 genCombinedOpcodes) {
 		sig = MetaData_GetBlob(pStandAloneSig->signature, &sigLength);
 		MetaData_DecodeSigEntry(&sig); // Always 0x07
 		numLocals = MetaData_DecodeSigEntry(&sig);
-		pLocals = (tParameter*)malloc(numLocals * sizeof(tParameter));
+		pLocals = (tParameter*)dna::malloc(numLocals * sizeof(tParameter));
 		totalSize = 0;
 		for (i=0; i<numLocals; i++) {
 			tMD_TypeDef *pTypeDef;
@@ -1859,5 +1859,5 @@ void JIT_Prepare(tMD_MethodDef *pMethodDef, U32 genCombinedOpcodes) {
 	pJITted->pOps = JITit(pMethodDef, pCIL, codeSize, pLocals, pJITted, genCombinedOpcodes, &pSequencePoints);
 	pJITted->pOpSequencePoints = pSequencePoints;
 
-	free(pLocals);
+	dna::free(pLocals);
 }

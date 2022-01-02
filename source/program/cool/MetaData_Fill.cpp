@@ -104,7 +104,7 @@ void MetaData_Fill_MethodDef(tMD_TypeDef *pParentType, tMD_MethodDef *pMethodDef
 	if (pMethodDef->pReturnType != NULL) {
 		MetaData_Fill_TypeDef(pMethodDef->pReturnType, NULL, NULL);
 	}
-	pMethodDef->pParams = (tParameter*)malloc(pMethodDef->numberOfParameters * sizeof(tParameter));
+	pMethodDef->pParams = (tParameter*)dna::malloc(pMethodDef->numberOfParameters * sizeof(tParameter));
 	totalSize = 0;
 	if (!METHOD_ISSTATIC(pMethodDef)) {
 		// Fill in parameter info for the 'this' pointer

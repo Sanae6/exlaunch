@@ -21,7 +21,7 @@
 #include "Compat.hpp"
 #include "Sys.hpp"
 
-#include "JIT.hpp"
+#include "JITMain.hpp"
 
 #include "JIT_OpCodes.hpp"
 #include "MetaData.hpp"
@@ -1078,7 +1078,7 @@ JIT_INVOKE_DELEGATE_start:
 			//pCurrentMethodState->stackOfs -= pDelegateMethod->parameterStackSize;
 			pCurEvalStack -= pDelegateMethod->parameterStackSize;
 			// Allocate memory for delegate params
-			pCurrentMethodState->pDelegateParams = malloc(pDelegateMethod->parameterStackSize - sizeof(void*));
+			pCurrentMethodState->pDelegateParams = dna::malloc(pDelegateMethod->parameterStackSize - sizeof(void*));
 			memcpy(
 				pCurrentMethodState->pDelegateParams,
 				//pCurrentMethodState->pEvalStack + pCurrentMethodState->stackOfs + sizeof(void*),

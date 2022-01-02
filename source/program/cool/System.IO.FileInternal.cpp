@@ -30,6 +30,8 @@
 
 #include "errno.h"
 
+#include "nn/fs.h"
+
 #define ERROR_UNKNOWNMODE -1
 
 #define FILEMODE_CREATENEW 1
@@ -41,6 +43,11 @@
 
 #define FILEATTRIBUTES_DIRECTORY 0x00010
 
+struct InternalFile {
+	nn::fs::FileHandle handle;
+	s64 offset;
+};
+
 tAsyncCall* System_IO_FileInternal_Open(PTR pThis_, PTR pParams, PTR pReturnValue) {
 	U32 filenameLen;
 	STRING2 filename2;
@@ -48,8 +55,9 @@ tAsyncCall* System_IO_FileInternal_Open(PTR pThis_, PTR pParams, PTR pReturnValu
 	U32 *pError;
 	unsigned char filename[256];
 	U32 i;
-	I32 f = 0;
+	InternalFile* file = new InternalFile();
 	int flags, error = 0;
+	nn::Result rc;
 	
 	filename2 = SystemString_GetString(((HEAP_PTR*)pParams)[0], &filenameLen);
 	mode = ((U32*)pParams)[1];
@@ -62,61 +70,59 @@ tAsyncCall* System_IO_FileInternal_Open(PTR pThis_, PTR pParams, PTR pReturnValu
 	}
 	filename[i] = 0;
 
-	flags = O_BINARY;
+	flags = 0;
 	switch (mode) {
 	case FILEMODE_OPEN:
-		flags |= O_RDWR;
+		flags |= nn::fs::OpenMode_ReadWrite;
 		break;
 	default:
 		error = ERROR_UNKNOWNMODE;
 		goto done;
 	}
-	f = open(filename, flags);
-	if (f < 0) {
+
+	rc = nn::fs::OpenFile(&file->handle, (char*)filename, flags);
+	if (rc.isFailure()) {
 		// Failed to open
-		error = errno;
+		error = rc.value;
 		goto done;
 	}
 
 done:
-	*(I32*)pReturnValue = f;
+	*(InternalFile**)pReturnValue = file;
 	*pError = error;
 	return NULL;
 }
 
 tAsyncCall* System_IO_FileInternal_Read(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	U32 f;
+	InternalFile* f;
 	HEAP_PTR dst;
 	U32 startOfs, count;
 	U32 *pError;
 	PTR pFirstElement;
-	I32 ret = 0, error = 0;
 
-	f = ((U32*)pParams)[0];
+	f = ((InternalFile**)pParams)[0];
 	dst = ((HEAP_PTR*)pParams)[1];
 	startOfs = ((U32*)pParams)[2];
 	count = ((U32*)pParams)[3];
 	pError = ((U32**)pParams)[4];
 	pFirstElement = SystemArray_LoadElementAddress(dst, startOfs);
 
-	ret = read(f, pFirstElement, count);
-	if (ret < 0) {
-		error = errno;
-	}
+	nn::Result rc = nn::fs::ReadFile(f->handle, f->offset, pFirstElement, count);
+	f->offset += count;
 
-	*pError = error;
-	*(U32*)pReturnValue = ret;
+	*pError = rc.value;
+	*(U32*)pReturnValue = rc.value;
 	return NULL;
 }
 
 tAsyncCall* System_IO_FileInternal_Close(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	U32 f;
+	InternalFile* f;
 	U32 *pError;
 
-	f = ((U32*)pParams)[0];
+	f = ((InternalFile**)pParams)[0];
 	pError = ((U32**)pParams)[1];
 
-	close(f);
+	nn::fs::CloseFile(f->handle);
 
 	*pError = 0;
 
@@ -126,15 +132,7 @@ tAsyncCall* System_IO_FileInternal_Close(PTR pThis_, PTR pParams, PTR pReturnVal
 tAsyncCall* System_IO_FileInternal_GetCurrentDirectory(PTR pThis_, PTR pParams, PTR pReturnValue) {
 	U32 *pError = ((U32**)pParams)[0];
 	HEAP_PTR curDir;
-#ifdef _WIN32
-	unsigned short dir[256];
-	GetCurrentDirectoryW(256, dir);
-	curDir = SystemString_FromCharPtrUTF16(dir);
-#else
-	unsigned char dir[256];
-	getcwd(dir, 256);
-	curDir = SystemString_FromCharPtrASCII(dir);
-#endif
+	curDir = SystemString_FromCharPtrASCII("romfs:/NetData");
 	*pError = 0;
 	*(HEAP_PTR*)pReturnValue = curDir;
 	return NULL;
@@ -200,70 +198,47 @@ tAsyncCall* System_IO_FileInternal_GetFileSystemEntries(PTR pThis_, PTR pParams,
 	STRING2 pathPattern = SystemString_GetString(pathPatternHP, &pathPatternLen);
 	HEAP_PTR retArray;
 	U32 tempStoreSize = 32, tempStoreOfs = 0, i;
-	HEAP_PTR *pTempStore = malloc(tempStoreSize * sizeof(void*));
+	HEAP_PTR *pTempStore = (HEAP_PTR*) dna::malloc(tempStoreSize * sizeof(void*));
 	PTR arrayElements;
-#ifdef _WIN32
-	unsigned short pathPatternNullTerm[256];
-	HANDLE hFind;
-	WIN32_FIND_DATA find;
-	memcpy(pathPatternNullTerm, pathPattern, pathPatternLen << 1);
-	pathPatternNullTerm[pathPatternLen] = 0;
-	hFind = FindFirstFileW(pathPatternNullTerm, &find);
-	if (hFind != INVALID_HANDLE_VALUE) {
-		do {
-			if ((find.dwFileAttributes & mask) == attrs) {
-				HEAP_PTR str;
-				// Want this file, so store it in tempStore
-				if (tempStoreOfs >= tempStoreSize) {
-					tempStoreSize <<= 1;
-					pTempStore = realloc(pTempStore, tempStoreSize * sizeof(void*));
-				}
-				str = SystemString_FromCharPtrUTF16(find.cFileName);
-				// Need to temporarily make these undeletable, in case a GC happens before they're in the array
-				Heap_MakeUndeletable(str);
-				pTempStore[tempStoreOfs++] = str;
-			}
-		} while (FindNextFile(hFind, &find) != 0);
-		FindClose(hFind);
-	}
-#else
-	unsigned char path8[256];
-	glob_t gl;
+	char path8[256];
+// 	glob_t gl;
 	for (i=0; i<pathPatternLen; i++) {
 		path8[i] = (U8)pathPattern[i];
 	}
 	path8[i] = 0;
-	i = glob(path8, GLOB_NOSORT, NULL, &gl);
-	if (i == 0) {
-		for (i=0; i<gl.gl_pathc; i++) {
-			unsigned char *pResult = gl.gl_pathv[i];
-			U32 fileAttrs = Attrs(pResult, pError);
-			if (fileAttrs == (U32)-1) {
-				break;
-			}
-			if ((fileAttrs & mask) == attrs) {
-				HEAP_PTR str;
-				// Want this file, so store it in tempStore
-				if (tempStoreOfs >= tempStoreSize) {
-					tempStoreSize <<= 1;
-					pTempStore = realloc(pTempStore, tempStoreSize * sizeof(void*));
-				}
-				str = SystemString_FromCharPtrASCII(pResult);
-				// Need to temporarily make these undeletable, in case a GC happens before they're in the array
-				Heap_MakeUndeletable(str);
-				pTempStore[tempStoreOfs++] = str;
-			}
-		}
-		globfree(&gl);
-	} else {
-		*pError = errno;
-	}
-#endif
+// 	i = glob(path8, GLOB_NOSORT, NULL, &gl);
+// 	if (i == 0) {
+// 		for (i=0; i<gl.gl_pathc; i++) {
+// 			unsigned char *pResult = gl.gl_pathv[i];
+// 			U32 fileAttrs = Attrs(pResult, pError);
+// 			if (fileAttrs == (U32)-1) {
+// 				break;
+// 			}
+// 			if ((fileAttrs & mask) == attrs) {
+// 				HEAP_PTR str;
+// 				// Want this file, so store it in tempStore
+// 				if (tempStoreOfs >= tempStoreSize) {
+// 					tempStoreSize <<= 1;
+// 					pTempStore = dna::realloc(pTempStore, tempStoreSize * sizeof(void*));
+// 				}
+// 				str = SystemString_FromCharPtrASCII(pResult);
+// 				// Need to temporarily make these undeletable, in case a GC happens before they're in the array
+// 				Heap_MakeUndeletable(str);
+// 				pTempStore[tempStoreOfs++] = str;
+// 			}
+// 		}
+// 		globfree(&gl);
+// 	} else {
+// 		*pError = errno;
+// 	}
+// #endif
+	nn::fs::DirectoryHandle dir;
+	nn::fs::OpenDirectory(&dir, path8, nn::fs::OpenMode_Read);
 	// Move the temp-store values into the final returnable array
 	retArray = SystemArray_NewVector(types[TYPE_SYSTEM_ARRAY_STRING], tempStoreOfs);
 	arrayElements = SystemArray_GetElements(retArray);
 	memcpy(arrayElements, pTempStore, tempStoreOfs * sizeof(void*));
-	free(pTempStore);
+	dna::free(pTempStore);
 	*(HEAP_PTR*)pReturnValue = retArray;
 	// Make the strings deletable again
 	for (i=0; i<tempStoreOfs; i++) {

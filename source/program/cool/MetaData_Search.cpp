@@ -95,12 +95,12 @@ static tMD_MethodDef* FindMethodInType(tMD_TypeDef *pTypeDef, STRING name, tMeta
 		char *pMsg;
 		tMD_TypeDef *pParamTypeDef;
 
-		pMsg = (char*)malloc(2048);
+		pMsg = (char*)dna::malloc(2048);
 		*pMsg = 0;
 		sig = MetaData_GetBlob(sigBlob, &i);
 		entry = MetaData_DecodeSigEntry(&sig);
 		if ((entry & SIG_METHODDEF_HASTHIS) == 0) {
-			sprintf(strchr(pMsg, 0), "static ");
+			nn::util::SNPrintf(strchr(pMsg, 0), 2048, "static ");
 		}
 		if (entry & SIG_METHODDEF_GENERIC) {
 			// read number of generic type args - don't care what it is
@@ -109,18 +109,18 @@ static tMD_MethodDef* FindMethodInType(tMD_TypeDef *pTypeDef, STRING name, tMeta
 		numParams = MetaData_DecodeSigEntry(&sig);
 		pParamTypeDef = Type_GetTypeFromSig(pSigMetaData, &sig, ppClassTypeArgs, ppMethodTypeArgs); // return type
 		if (pParamTypeDef != NULL) {
-			sprintf(strchr(pMsg, 0), "%s ", pParamTypeDef->name);
+			nn::util::SNPrintf(strchr(pMsg, 0), 2048, "%s ", pParamTypeDef->name);
 		}
-		sprintf(strchr(pMsg, 0), "%s.%s.%s(", pTypeDef->nameSpace, pTypeDef->name, name);
+		nn::util::SNPrintf(strchr(pMsg, 0), 2048, "%s.%s.%s(", pTypeDef->nameSpace, pTypeDef->name, name);
 		for (i=0; i<numParams; i++) {
 			pParamTypeDef = Type_GetTypeFromSig(pSigMetaData, &sig, ppClassTypeArgs, ppMethodTypeArgs);
 			if (i > 0) {
-				sprintf(strchr(pMsg, 0), ",");
+				nn::util::SNPrintf(strchr(pMsg, 0), 2048, ",");
 			}
 			if (pParamTypeDef != NULL) {
-				sprintf(strchr(pMsg, 0), pParamTypeDef->name);
+				nn::util::SNPrintf(strchr(pMsg, 0), 2048, (char*)pParamTypeDef->name);
 			} else {
-				sprintf(strchr(pMsg, 0), "???");
+				nn::util::SNPrintf(strchr(pMsg, 0), 2048, "???");
 			}
 		}
 		Crash("FindMethodInType(): Cannot find method %s)", pMsg);
@@ -134,7 +134,7 @@ static tMD_FieldDef* FindFieldInType(tMD_TypeDef *pTypeDef, STRING name) {
 	MetaData_Fill_TypeDef(pTypeDef, NULL, NULL);
 
 	for (i=0; i<pTypeDef->numFields; i++) {
-		if (strcmp(pTypeDef->ppFields[i]->name, name) == 0) {
+		if (strcmp((char*)pTypeDef->ppFields[i]->name, (char*)name) == 0) {
 			return pTypeDef->ppFields[i];
 		}
 	}

@@ -37,7 +37,7 @@ typedef unsigned short FLAGS16;
 typedef unsigned char* HEAP_PTR;
 typedef unsigned char* PTR;
 typedef unsigned char* SIG;
-typedef unsigned char* STRING; // UTF8/ASCII string
+typedef char* STRING; // UTF8/ASCII string
 typedef unsigned short* STRING2; // UTF16 string
 typedef unsigned char* BLOB_;
 typedef unsigned char* GUID_;
