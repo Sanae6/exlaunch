@@ -9,3 +9,7 @@ deploy/*
 .idea/
 # in case you're using ida to check something
 *.elf.*
+
+corelib/.idea/
+corelib/corlib/bin
+corelib/corlib/obj

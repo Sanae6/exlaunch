@@ -128,7 +128,7 @@ static void PushU32_(tOps *pOps, U32 v, I32 opSequencePoint) {
 	if (pOps->ofs >= pOps->capacity) {
 		pOps->capacity <<= 1;
 //		printf("a.pOps->p = 0x%08x size=%d\n", pOps->p, pOps->capacity * sizeof(U32));
-		pOps->p = dna::realloc(pOps->p, pOps->capacity * sizeof(U32));
+		pOps->p = (U32*) dna::realloc(pOps->p, pOps->capacity * sizeof(U32));
 		pOps->pSequencePoints = dna::realloc(pOps->pSequencePoints, pOps->capacity * sizeof(U32));
 	}
 	pOps->pSequencePoints[pOps->ofs] = opSequencePoint;
