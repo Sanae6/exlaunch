@@ -15,7 +15,7 @@ export MAKE_ARGS=-j8 V=1
 export NPDM_JSON_BASE=qlaunch.json
 
 # Settings for the network logger to use
-export LOGGER_IP=192.168.1.99
+export LOGGER_IP=192.168.1.94
 export LOGGER_PORT=1984
 
 # AsRtld settings

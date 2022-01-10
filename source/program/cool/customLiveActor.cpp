@@ -58,7 +58,8 @@ namespace ca
         }
         else if (al::isActionEnd(this))
         {
-            al::setNerve(this, &nrvDead);
+            // al::setNerve(this, &nrvDead);
+            al::startAction(this, "ReactionHipDrop");
         }
     }
 
@@ -71,7 +72,8 @@ namespace ca
         }
         else if (al::isActionEnd(this))
         {
-            al::setNerve(this, &nrvDead);
+            // al::setNerve(this, &nrvDead);
+            al::startAction(this, "Reaction");
         }
     }
 

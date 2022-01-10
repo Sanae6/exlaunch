@@ -29,7 +29,7 @@ bool tryInitSocket();
 MAKE_HOOK_T(void, socketInit, (void* gs), {
     impl(gs);
 
-    exl::logger::log("\aConnected\n");
+    exl::logger::log("\aConnected2\n");
 });
 
 MAKE_HOOK(bool, snapshotMode, (void* sceneMaybe), { return false; });

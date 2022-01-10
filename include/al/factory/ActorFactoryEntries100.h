@@ -4,8 +4,6 @@
 
 #include "game/Actors/Shine.h"
 
-#include "customLiveActor.hpp"
-
 namespace al
 {
     class AllDeadWatcher;
@@ -68,9 +66,13 @@ namespace al
     class WobbleMapParts;
 } // namespace al
 
+#include "customLiveActor.hpp"
+#include "customPlayer.hpp"
+
 static al::FactoryEntry<al::createActor> actorEntries[] = {
     // CUSTOM ACTOR ENTRIES HERE
     {"BlockShine", &al::createCustomActor<ca::BlockShine>},
+    {"BirdPlayer", &al::createCustomActor<ca::BirdPlayer>},
     // VANILLA ACTOR ENTRIES
     {"AchievementNpc", &al::createActorFunction<class AchievementNpc>},
     {"AirBubble", &al::createActorFunction<class AirBubble>},
