@@ -52,7 +52,7 @@ void DNA_Init() {
 
 void DNA_Load() {
 	tCLIFile *pCLIFile;
-	pCLIFile = CLIFile_Load("romfs:/DNA/TestProject.dll");
+	pCLIFile = CLIFile_Load("content:/NetData/TestProject.dll");
 
 	if (pCLIFile->entryPoint) {
 		char* argv[] = {"sex", "sex"};

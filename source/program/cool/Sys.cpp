@@ -50,11 +50,11 @@ U32 logLevel = 0;
 void log_f(U32 level, char *pMsg, ...) {
 	va_list va;
 
-	if (logLevel >= level) {
+//	if (logLevel >= level) {
 		va_start(va, pMsg);
 		exl::logger::log(pMsg, va);
 		va_end(va);
-	}
+//	}
 }
 
 static char methodName[2048];
@@ -78,19 +78,23 @@ char* Sys_GetMethodDesc(tMD_MethodDef *pMethod) {
 nn::mem::StandardAllocator* allocator;
 
 void Sys_Init() {
+    exl::logger::log("Getting allocator\n");
 	allocator = nn::init::GetAllocator();
+    exl::logger::log("Legally acquired allocator %p\n", allocator);
 }
 
-void* dna::malloc(size_t size) {
-	return allocator->Allocate(size);
-}
+namespace dna {
+    void* malloc(size_t size) {
+        return allocator->Allocate(size);
+    }
 
-void* dna::realloc(void* address, size_t size) {
-	return allocator->Reallocate(address, size);
-}
+    void* realloc(void* address, size_t size) {
+        return allocator->Reallocate(address, size);
+    }
 
-void dna::free(void* address) {
-	allocator->Free(address);
+    void free(void* address) {
+        allocator->Free(address);
+    }
 }
 
 static U32 mallocForeverSize = 0;

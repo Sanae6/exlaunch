@@ -31,5 +31,5 @@
 #define TMALLOC(t) (t*)dna::malloc(sizeof(t))
 #define TMALLOCFOREVER(t) (t*)mallocForever(sizeof(t))
 
-#define LIB_PREFIX "romfs:/NetData/"
+#define LIB_PREFIX "content:/NetData/"
 #define LIB_SUFFIX "nro"

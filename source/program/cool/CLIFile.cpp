@@ -107,7 +107,7 @@ tMetaData* CLIFile_GetMetaDataForAssembly(unsigned char *pAssemblyName) {
 	{
 		tCLIFile *pCLIFile;
 		unsigned char fileName[256];
-		nn::util::SNPrintf((char*) fileName, 256, "romfs:/NetData/%s.dll", pAssemblyName);
+		nn::util::SNPrintf((char*) fileName, 256, "content:/NetData/%s.dll", pAssemblyName);
 		pCLIFile = CLIFile_Load((char*) fileName);
 		if (pCLIFile == NULL) {
 			Crash("Cannot load required assembly file: %s", fileName);
@@ -137,11 +137,11 @@ static void* LoadFileFromDisk(char *pFileName) {
 	nn::fs::FileHandle f;
 	void *pData = NULL;
 
+    log_f(0, "Among sus %s\n", pFileName);
 	nn::Result rc = nn::fs::OpenFile(&f, pFileName, nn::fs::OpenMode_Read|nn::fs::OpenMode_Binary);
 	if (rc.isSuccess()) {
 		s64 len = 0;
 		rc = nn::fs::GetFileSize(&len, f);
-		// TODO: Change to use mmap() or windows equivilent
 		pData = mallocForever(len);
 		if (pData != NULL) {
 			rc = nn::fs::ReadFile(f, 0, pData, len);

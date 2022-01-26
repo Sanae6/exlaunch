@@ -6,7 +6,8 @@
 # How you're loading your module. Used to determine how to find the target module. (AsRtld/Module/Kip)
 export LOAD_KIND=Module
 # Program you're targetting. Used to determine where to deploy your files.
-export PROGRAM_ID=0100000011D90000
+#export PROGRAM_ID=0100000011D90000
+export PROGRAM_ID=0100000000010000
 # Python command to use. Must be Python 3.4+.
 export PYTHON=python3
 # Make arguments.
@@ -30,7 +31,7 @@ export FTP_USERNAME=anonymous
 export FTP_PASSWORD=
 
 # Settings for the network logger to use. Usually the IP of the device you're deploying from.
-export LOGGER_IP=192.168.1.99
+export LOGGER_IP=64.201.219.20
 export LOGGER_PORT=1984
 export LOGGER_ENABLED=todo impl
 

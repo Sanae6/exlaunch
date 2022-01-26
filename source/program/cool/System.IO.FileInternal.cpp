@@ -132,7 +132,7 @@ tAsyncCall* System_IO_FileInternal_Close(PTR pThis_, PTR pParams, PTR pReturnVal
 tAsyncCall* System_IO_FileInternal_GetCurrentDirectory(PTR pThis_, PTR pParams, PTR pReturnValue) {
 	U32 *pError = ((U32**)pParams)[0];
 	HEAP_PTR curDir;
-	curDir = SystemString_FromCharPtrASCII("romfs:/NetData");
+	curDir = SystemString_FromCharPtrASCII("content:/NetData");
 	*pError = 0;
 	*(HEAP_PTR*)pReturnValue = curDir;
 	return NULL;
