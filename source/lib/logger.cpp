@@ -2,6 +2,7 @@
 #include "nn/util.h"
 #include "nn/nifm.h"
 #include "nn/socket.h"
+#include "types.h"
 
 SocketLogState socketLogState = SOCKET_LOG_UNINITIALIZED;
 s32 socket;

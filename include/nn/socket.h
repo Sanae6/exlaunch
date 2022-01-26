@@ -1,24 +1,28 @@
+/**
+ * @file socket.h
+ * @brief Functions for opening sockets for wireless communication.
+ */
+
 #pragma once
 
-#include "../types.h"
-#include "errno.h"
+#include <nn/types.h>
+#include "syssocket/sockdefines.h"
 
-struct in_addr
-{
-    u32 data;           // 0
+struct in_addr {
+    u32 addr;
 };
 
 struct sockaddr
 {
-    u8 _0;              // 0
-    u8 family;          // 1
-    u16 port;           // 2
-    in_addr address;    // 4
-    u8 _8[8];           // 8
+    u8 _0;
+    u8 family;
+    u16 port;
+    in_addr address;
+    u8 _8[8];
 };
 
-
-namespace nn { namespace socket {
+namespace nn {
+namespace socket {
 
 Result Initialize(void* pool, ulong poolSize, ulong allocPoolSize, int concurLimit);
 
@@ -38,4 +42,5 @@ s32 Recv(s32 socket, void* out, ulong outLen, s32 flags);
 u16 InetHtons(u16 val);
 s32 InetAton(const char* addressStr, in_addr* addressOut);
 
-} }
+}  // namespace socket
+}  // namespace nn

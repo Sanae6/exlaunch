@@ -5,85 +5,82 @@
 
 #pragma once
 
-#include "types.h"
+#include <nn/types.h>
 
-namespace nn
-{
-    namespace crypto
-    {
-        class Sha256Context;
+namespace nn {
+namespace crypto {
+void GenerateSha256Hash(void*, ulong, void const*, ulong);
 
-        void DecryptAes128Cbc(void *, u64, void const *, u64, void const *, u64, void const *, u64);
-        void EncryptAes128Cbc(void *, u64, void const *, u64, void const *, u64, void const *, u64);
-        void DecryptAes128Ccm(void *, u64, void *, u64, void const *, u64, void const *, u64, void const *, u64, void const *, u64, u64);
+class Sha256Context;
 
-        namespace detail
-        {
-            class Md5Impl
-            {
-            public:
-                void Initialize();
-                void Update(void const *, u64 dataSize);
-                void ProcessBlock();
-                void GetHash(void *, u64 hashSize);
-                void ProcessLastBlock();
+void DecryptAes128Cbc(void*, u64, void const*, u64, void const*, u64, void const*, u64);
+void EncryptAes128Cbc(void*, u64, void const*, u64, void const*, u64, void const*, u64);
+void DecryptAes128Ccm(void*, u64, void*, u64, void const*, u64, void const*, u64, void const*, u64,
+                      void const*, u64, u64);
 
-                u32 _0;
-                u32 _4;
-                u32 _8;
-                u32 _C;
-                u8 _10[0x50-0x10];
-                u64 _50;
-                u32 _58;
-            };
+namespace detail {
+class Md5Impl {
+public:
+    void Initialize();
+    void Update(void const*, u64 dataSize);
+    void ProcessBlock();
+    void GetHash(void*, u64 hashSize);
+    void ProcessLastBlock();
 
-            class Sha1Impl
-            {
-            public:
-                void Initialize();
-                void Update(void const *, u64);
-                void ProcessBlock(void const *);
-                void GetHash(void *destHash, u64);
-                void ProcessLastBlock();
-
-                u64 _0;
-                u64 _8;
-                u32 _10;
-                u128 _14;
-                u128 _24;
-                u128 _34;
-                u32 _44;
-                u64 _48;
-                u64 _50;
-                u64 _58;
-                u64 _60;
-            };
-
-            class Sha256Impl
-            {
-            public:
-                void Initialize();
-                void Update(void const *, u64);
-                void ProcessBlocks(u8 const *, u64);
-                void GetHash(void *destHash, u64);
-                void ProcessLastBlock();
-                void InitializeWithContext(nn::crypto::Sha256Context const *);
-                void GetContext(nn::crypto::Sha256Context *) const;
-
-                u64 _0;
-                u64 _8;
-                u32 _10;
-                u128 _14;
-                u128 _24;
-                u128 _34;
-                u32 _44;
-                u64 _48;
-                u64 _50;
-                u64 _58;
-                u64 _60;
-                u64 _68;
-                u32 _70;
-            };
-        };
-    };
+    u32 _x0;
+    u32 _x4;
+    u32 _x8;
+    u32 _xC;
+    u8 _x10[0x50 - 0x10];
+    u64 _x50;
+    u32 _x58;
 };
+
+class Sha1Impl {
+public:
+    void Initialize();
+    void Update(void const*, u64);
+    void ProcessBlock(void const*);
+    void GetHash(void* destHash, u64);
+    void ProcessLastBlock();
+
+    u64 _x0;
+    u64 _x8;
+    u32 _x10;
+    u128 _x14;
+    u128 _x24;
+    u128 _x34;
+    u32 _x44;
+    u64 _x48;
+    u64 _x50;
+    u64 _x58;
+    u64 _x60;
+};
+
+class Sha256Impl {
+public:
+    void Initialize();
+    void Update(void const*, u64);
+    void ProcessBlocks(u8 const*, u64);
+    void GetHash(void* destHash, u64);
+    void ProcessLastBlock();
+    void InitializeWithContext(nn::crypto::Sha256Context const*);
+    void GetContext(nn::crypto::Sha256Context*) const;
+
+    u64 _x0;
+    u64 _x8;
+    u32 _x10;
+    u128 _x14;
+    u128 _x24;
+    u128 _x34;
+    u32 _x44;
+    u64 _x48;
+    u64 _x50;
+    u64 _x58;
+    u64 _x60;
+    u64 _x68;
+    u32 _x70;
+};
+};  // namespace detail
+};  // namespace crypto
+};  // namespace nn

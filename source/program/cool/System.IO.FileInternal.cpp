@@ -81,9 +81,9 @@ tAsyncCall* System_IO_FileInternal_Open(PTR pThis_, PTR pParams, PTR pReturnValu
 	}
 
 	rc = nn::fs::OpenFile(&file->handle, (char*)filename, flags);
-	if (rc.isFailure()) {
+	if (rc.IsFailure()) {
 		// Failed to open
-		error = rc.value;
+		error = rc.GetInnerValueForDebug();
 		goto done;
 	}
 
@@ -110,8 +110,8 @@ tAsyncCall* System_IO_FileInternal_Read(PTR pThis_, PTR pParams, PTR pReturnValu
 	nn::Result rc = nn::fs::ReadFile(f->handle, f->offset, pFirstElement, count);
 	f->offset += count;
 
-	*pError = rc.value;
-	*(U32*)pReturnValue = rc.value;
+	*pError = rc.GetInnerValueForDebug();
+	*(U32*)pReturnValue = rc.GetInnerValueForDebug();;
 	return NULL;
 }
 

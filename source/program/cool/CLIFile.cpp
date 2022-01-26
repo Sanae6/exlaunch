@@ -139,13 +139,13 @@ static void* LoadFileFromDisk(char *pFileName) {
 
     log_f(0, "Among sus %s\n", pFileName);
 	nn::Result rc = nn::fs::OpenFile(&f, pFileName, nn::fs::OpenMode_Read|nn::fs::OpenMode_Binary);
-	if (rc.isSuccess()) {
+	if (rc.IsSuccess()) {
 		s64 len = 0;
 		rc = nn::fs::GetFileSize(&len, f);
 		pData = mallocForever(len);
 		if (pData != NULL) {
 			rc = nn::fs::ReadFile(f, 0, pData, len);
-			if (rc.isFailure()) {
+			if (rc.IsFailure()) {
 				dna::free(pData);
 				pData = NULL;
 			}

@@ -30,6 +30,7 @@
 #include "syssocket/sockdefines.h"
 // #include "inet/protocoltypes.h"
 #include "lib/nx/result.h"
+#include "errno.h"
 
 
 void Socket_Init() {
@@ -75,7 +76,7 @@ tAsyncCall* System_Net_Sockets_Internal_Bind(PTR pThis_, PTR pParams, PTR pRetur
 	U32 *pError = INTERNALCALL_PARAM(12, U32*);
 
 	sa.family = AF_INET;
-	sa.address.data = addr;
+	sa.address.addr = addr;
 	sa.port = nn::socket::InetHtons(port);
 
 	*pError = R_FAILED(nn::socket::Bind(s, (struct sockaddr*)&sa, sizeof(sa)));
@@ -147,7 +148,7 @@ static U32 Connect_Check(PTR pThis_, PTR pParams, PTR pReturnValue, tAsyncCall *
 	U32 *pError = INTERNALCALL_PARAM(12, U32*);
 
 	sa.family = AF_INET;
-	sa.address.data = addr;
+	sa.address.addr = addr;
 	sa.port = nn::socket::InetHtons(port);
 
 	r = nn::socket::Connect(s, (struct sockaddr*)&sa, sizeof(sa));

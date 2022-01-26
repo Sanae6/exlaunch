@@ -1,92 +1,133 @@
+/**
+ * @file fs.h
+ * @brief Filesystem implementation.
+ */
+
 #pragma once
 
-#include "result.h"
+#include <nn/account.h>
+#include <nn/types.h>
 
-namespace nn { namespace fs {
+namespace nn {
+typedef u64 ApplicationId;
 
-const s32 PathLengthMax = 0x300;
+namespace fs {
+using namespace ams::fs;
 
-struct FileHandle
-{
-    u32 handle;
+typedef u64 UserId;
+
+struct DirectoryEntry {
+    char name[0x300 + 1];
+    char _x302[3];
+    u8 type;
+    char _x304;
+    s64 fileSize;
 };
 
-struct DirectoryHandle
-{
-    u32 handle;
+struct FileHandle {
+    void* handle;
 };
 
-struct DirectoryEntry
-{
-    char name[PathLengthMax+1];     // 0
-    char _301[3];                   // 301
-    u8 type;                        // 304
-    s64 fileSize;                   // 308
+struct DirectoryHandle {
+    void* handle;
 };
 
-enum OpenMode
-{
-    OpenMode_Read       = 1 << 0,
-    OpenMode_Write      = 1 << 1,
-    OpenMode_Binary     = 1 << 16,
-    OpenMode_ReadWrite  = OpenMode_Read | OpenMode_Write
+enum DirectoryEntryType { DirectoryEntryType_Directory, DirectoryEntryType_File };
+
+enum OpenMode {
+    OpenMode_Read = 1 << 0,
+    OpenMode_Write = 1 << 1,
+    OpenMode_Append = 1 << 2,
+    OpenMode_Binary = 1 << 16,
+
+    OpenMode_ReadWrite = OpenMode_Read | OpenMode_Write
 };
 
-enum DirectoryMode
-{
-    DirectoryMode_Directories       = 1 << 0,
-    DirectoryMode_Files             = 1 << 1,
-    DirectoryMode_DirectoriesFiles  = DirectoryMode_Directories | DirectoryMode_Files
+enum OpenDirectoryMode {
+    OpenDirectoryMode_Directory = 1 << 0,
+    OpenDirectoryMode_File = 1 << 1,
+    OpenDirectoryMode_All = OpenDirectoryMode_Directory | OpenDirectoryMode_File,
 };
 
-enum DirectoryEntryType
-{
-    DirectoryEntryType_Directory    = 0,
-    DirectoryEntryType_File         = 1
+struct ReadOption {
+    u32 value;
+
+    static const ReadOption None;
+};
+inline constexpr const ReadOption ReadOption::None = {0};
+
+enum WriteOptionFlag {
+    WriteOptionFlag_Flush = 1 << 0,
 };
 
-struct ReadOption
-{
-    ReadOption(u32 flags = 0) : flags(flags) { }
-    u32 flags;
+struct WriteOption {
+    int flags;
+
+    static WriteOption CreateOption(int flags) {
+        WriteOption op;
+        op.flags = flags;
+        return op;
+    }
 };
 
-struct WriteOption
-{
-    enum Flags
-    {
-        Flush = 1
-    };
+// ROM
+Result QueryMountRomCacheSize(size_t* size);
+Result QueryMountRomCacheSize(size_t* size, nn::ApplicationId);
+Result QueryMountAddOnContentCacheSize(size_t* size, int id);
+Result MountRom(char const* name, void* cache, size_t cache_size);
+Result MountAddOnContent(char const* name, int id, void* cache, size_t cache_size);
+bool CanMountRomForDebug();
+Result CanMountRom(nn::ApplicationId);
+Result QueryMountRomOnFileCacheSize(u64*, nn::fs::FileHandle);
+Result MountRomOnFile(char const*, nn::fs::FileHandle, void*, u64);
 
-    WriteOption(u32 flags = 0) : flags(flags) { }
-    u32 flags;
-};
+// SAVE
+Result EnsureSaveData(nn::account::Uid const&);
+Result MountSaveData(char const*, nn::fs::UserId);
+Result MountSaveDataForDebug(char const*);
+Result CommitSaveData(const char* path);
 
+// FILE
+Result GetEntryType(nn::fs::DirectoryEntryType* type, char const* path);
+Result CreateFile(char const* filepath, s64 size);
+Result OpenFile(nn::fs::FileHandle*, char const* path, s32);
+Result SetFileSize(FileHandle fileHandle, s64 filesize);
+void CloseFile(FileHandle fileHandle);
+Result FlushFile(FileHandle fileHandle);
+Result DeleteFile(char const* filepath);
+Result ReadFile(u64* outSize, nn::fs::FileHandle handle, s64 offset, void* buffer, u64 bufferSize,
+                const ReadOption& option);
+Result ReadFile(u64* outSize, nn::fs::FileHandle handle, s64 offset, void* buffer, u64 bufferSize);
+Result ReadFile(nn::fs::FileHandle handle, s64 offset, void* buffer, u64 bufferSize);
+Result WriteFile(FileHandle handle, s64 fileOffset, void const* buff, u64 size,
+                 WriteOption const& option);
+Result GetFileSize(s64* size, FileHandle fileHandle);
 
-Result OpenFile(FileHandle* out, const char* path, s32 mode);
-void CloseFile(FileHandle handle);
-Result ReadFile(FileHandle handle, s64 offset, void* buffer, u32 size);
-Result ReadFile(FileHandle handle, s64 offset, void* buffer, u32 size, const ReadOption& options);
-Result WriteFile(FileHandle handle, s64 offset, const void* buffer, u32 size, const WriteOption& options = WriteOption(0));
-Result FlushFile(FileHandle handle);
-Result GetFileSize(s64* out, FileHandle handle);
-Result SetFileSize(FileHandle handle, s64 size);
+// DIRECTORY
+// there are three open modes; dir, file, all
+Result OpenDirectory(DirectoryHandle* handle, char const* path, s32 openMode);
+void CloseDirectory(DirectoryHandle directoryHandle);
+Result ReadDirectory(s64*, DirectoryEntry*, DirectoryHandle directoryHandle, s64);
+Result CreateDirectory(char const* directorypath);
+Result GetDirectoryEntryCount(s64*, DirectoryHandle);
 
-Result CreateFile(const char* path, s64 size);
-Result DeleteFile(const char* path);
-Result RenameFile(const char* path, const char* newPath);
+// SD
+Result MountSdCard(char const*);
+Result MountSdCardForDebug(char const*);
+bool IsSdCardInserted();
+Result FormatSdCard();
+Result FormatSdCardDryRun();
+bool IsExFatSupported();
 
-Result OpenDirectory(DirectoryHandle* out, const char* path, s32 mode);
-void CloseDirectory(DirectoryHandle handle);
-Result ReadDirectory(s64* out, DirectoryEntry* entries, DirectoryHandle handle, s64 maxEntryCount);
-Result GetDirectoryEntryCount(s64* out, DirectoryHandle handle);
+Result MountHost(char const* mount, char const* path);
+Result MountHostRoot();
+Result UnmountHostRoot();
 
-Result CreateDirectory(char const* path);
-Result DeleteDirectory(const char* path);
-Result DeleteDirectoryRecursively(const char* path);
-Result RenameDirectory(const char* path, const char* newPath);
+Result Unmount(char const* mount);
 
-Result MountSdCard(const char* mountPoint);
-void Unmount(const char* mountPoint);
+// BCAT
+Result MountBcatSaveData(char const*, ApplicationId);
+Result CreateBcatSaveData(ApplicationId, s64);
 
-} }
+};  // namespace fs
+};  // namespace nn

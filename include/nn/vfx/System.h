@@ -5,23 +5,23 @@
 
 #pragma once
 
-#include "Config.h"
-#include "Heap.h"
+#include <nn/types.h>
+#include <nn/vfx/Config.h>
 
 // this class is massive
-namespace nn
-{
-    namespace vfx
-    {
-        class System
-        {
-        public:
-            System(nn::vfx::Config const &);
+namespace nn {
+namespace vfx {
 
-            virtual ~System();
-            virtual void Initialize(nn::vfx::Heap *,nn::vfx::Heap *, nn::vfx::Config const &);
+struct Heap;
 
-            u8 _0[0x1700];
-        };
-    };
+class System {
+public:
+    System(nn::vfx::Config const&);
+
+    virtual ~System();
+    virtual void Initialize(nn::vfx::Heap*, nn::vfx::Heap*, nn::vfx::Config const&);
+
+    u8 _0[0x1700];
 };
+};  // namespace vfx
+};  // namespace nn

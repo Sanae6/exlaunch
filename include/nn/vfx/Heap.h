@@ -5,16 +5,13 @@
 
 #pragma once
 
-#include "types.h"
+#include <nn/types.h>
 
-namespace nn
-{
-    namespace vfx
-    {
-        class Heap
-        {
-        public:
-            virtual ~Heap();
-        };
-    };
+namespace nn {
+namespace vfx {
+class Heap {
+public:
+    virtual ~Heap();
 };
+};  // namespace vfx
+};  // namespace nn

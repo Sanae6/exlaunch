@@ -31,7 +31,7 @@ export FTP_USERNAME=anonymous
 export FTP_PASSWORD=
 
 # Settings for the network logger to use. Usually the IP of the device you're deploying from.
-export LOGGER_IP=64.201.219.20
+export LOGGER_IP=192.168.1.94
 export LOGGER_PORT=1984
 export LOGGER_ENABLED=todo impl
 

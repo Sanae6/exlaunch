@@ -4,18 +4,15 @@
  */
 #pragma once
 
-#include "RootObject.h"
+#include <nn/nex/RootObject.h>
 
-namespace nn
-{
-    namespace nex
-    {
-        class RefCountedObject : public nn::nex::RootObject
-        {
-        public:
-            virtual ~RefCountedObject();
+namespace nn {
+namespace nex {
+class RefCountedObject : public nn::nex::RootObject {
+public:
+    virtual ~RefCountedObject();
 
-            u32 _8;
-        };
-    };
+    u32 _8;
 };
+};  // namespace nex
+};  // namespace nn

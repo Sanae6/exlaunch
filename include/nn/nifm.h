@@ -1,15 +1,21 @@
+/**
+ * @file nifm.h
+ * @brief Network inferface module.
+ */
+
 #pragma once
 
-#include "types.h"
-#include "result.h"
+#include <nn/types.h>
 
-namespace nn { namespace nifm {
-
+namespace nn {
+namespace nifm {
 Result Initialize();
-void SubmitNetworkRequest();
+void SetLocalNetworkMode(bool);
 void SubmitNetworkRequestAndWait();
-void CancelNetworkRequest();
-bool IsNetworkRequestOnHold();
 bool IsNetworkAvailable();
-
-} }
+Result HandleNetworkRequestResult();
+void SubmitNetworkRequest();
+bool IsNetworkRequestOnHold();
+Result GetCurrentPrimaryIpAddress(u64* inAddr);
+};  // namespace nifm
+};  // namespace nn
