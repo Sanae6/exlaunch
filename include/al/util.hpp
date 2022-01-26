@@ -201,6 +201,8 @@ namespace al
 
     void setVelocity(al::LiveActor *, sead::Vector3f const &);
 
+    void setVelocityOnlyV(al::LiveActor*, float);
+
     void scaleVelocityExceptDirection(al::LiveActor *, sead::Vector3f const &, float);
 
     void addVelocityToGravity(al::LiveActor *, float);

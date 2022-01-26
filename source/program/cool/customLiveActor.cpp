@@ -9,7 +9,7 @@ namespace ca
 
         al::initMapPartsActor(this, info, nullptr);
 
-        al::initNerve(this, &nrvWait, 0);
+        al::initNerve(this, &nrvBlockShineWait, 0);
 
         this->makeActorAlive();
     }
@@ -23,12 +23,12 @@ namespace ca
     {
         if (rs::isMsgUpperPunchAll(message))
         {
-            al::setNerve(this, &nrvReaction);
+            al::setNerve(this, &nrvBlockShineReaction);
             return true;
         }
         else if (rs::isMsgPlayerAndCapHipDropAll(message))
         {
-            al::setNerve(this, &nrvReactionHipDrop);
+            al::setNerve(this, &nrvBlockShineReactionHipDrop);
             return true;
         }
         return false;
@@ -58,7 +58,7 @@ namespace ca
         }
         else if (al::isActionEnd(this))
         {
-            // al::setNerve(this, &nrvDead);
+            // al::setNerve(this, &nrvBlockShineDead);
             al::startAction(this, "ReactionHipDrop");
         }
     }
@@ -72,7 +72,7 @@ namespace ca
         }
         else if (al::isActionEnd(this))
         {
-            // al::setNerve(this, &nrvDead);
+            // al::setNerve(this, &nrvBlockShineDead);
             al::startAction(this, "Reaction");
         }
     }

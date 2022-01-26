@@ -58,4 +58,6 @@ namespace rs
     void calcGroundNormalOrGravityDir(sead::Vector3f *result, al::LiveActor const *actor, IUsePlayerCollision const *col);
 
     void calcPlayerFrontDir(sead::Vector3f *result, al::LiveActor const *);
+
+    void initPlayerActorInfo(PlayerActorBase* playerActor, const PlayerInitInfo& initInfo);
 }

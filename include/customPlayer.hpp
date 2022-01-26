@@ -9,5 +9,12 @@ namespace ca {
     public:
         BirdPlayer(const char* name);
         void initPlayer(const al::ActorInitInfo&, const PlayerInitInfo&) override;
+        void movement();
+        void exeWait();
     };
+
+    namespace
+    {
+        NERVE_HEADER(BirdPlayer, Wait)
+    }
 }
