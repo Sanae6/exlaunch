@@ -423,6 +423,7 @@ void Type_Init() {
 	types = (tMD_TypeDef**)mallocForever(numInitTypes * sizeof(tMD_TypeDef*));
 	for (i=0; i<numInitTypes; i++) {
 		if (typeInit[i].assemblyName != NULL) {
+			log_f(0, "Initializing %s: %s.%s\n", typeInit[i].assemblyName, typeInit[i].nameSpace, typeInit[i].name);
 			// Normal type initialisation
 			types[i] = MetaData_GetTypeDefFromFullName(typeInit[i].assemblyName, typeInit[i].nameSpace, typeInit[i].name);
 

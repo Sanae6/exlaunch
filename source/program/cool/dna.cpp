@@ -31,7 +31,7 @@
 #include "lib/diag/abort.hpp"
 #include "lib/logger.hpp"
 
-static void ShowUsage() {
+void ShowUsageLol() {
 	exl::logger::log("Usage:\n");
 	exl::logger::log("\tdna [-v] <.Net executable to execute> [.Net executable arguments]\n");
 	exl::logger::log("\n");
@@ -42,6 +42,7 @@ static void ShowUsage() {
 }
 
 void DNA_Init() {
+	Sys_Init();
 	JIT_Execute_Init();
 	MetaData_Init();
 	Type_Init();

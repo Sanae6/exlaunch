@@ -32,6 +32,7 @@
 
 #include "lib.hpp"
 #include "nn/util.h"
+#include "lib/nx/kernel/svc.h"
 
 void Crash(char *pMsg, ...) {
 	va_list va;
@@ -42,7 +43,7 @@ void Crash(char *pMsg, ...) {
 	va_end(va);
 	exl::logger::log("\n\n");
 
-	EXL_ABORT(0x422);
+	svcExitProcess();
 }
 
 U32 logLevel = 0;
@@ -106,9 +107,9 @@ void* mallocForever(U32 size) {
 }
 
 char* stringOrNull(char* str) {
-	char* loc = new char[16];
-	memset(loc, 0, 16);
-	nn::util::SNPrintf(loc, 16, "%p", str);
+	char* loc = new char[512];
+	memset(loc, 0, 512);
+	nn::util::SNPrintf(loc, 512, "%p", str);
 	if (str != NULL) return str;
 	return "NULL";
 }

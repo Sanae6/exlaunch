@@ -1,26 +1,21 @@
 #include "lib.hpp"
 #include "nn/ro.h"
 #include "nn/oe.h"
+#include "nn/fs.h"
+#include "cool/Sys.hpp"
+#include <sead/basis/seadNew.hpp>
 
 void tryInitSocket();
-void Sys_Init();
-void JIT_Execute_Init();
-void MetaData_Init();
-void Type_Init();
-void Heap_Init();
-void Finalizer_Init();
-void Socket_Init();
+void DNA_Init();
+void ShowUsageLol();
 
 MAKE_HOOK_T(void, socketInit, (void* gs), {
     impl(gs);
     exl::logger::log("\aConnected\n");
-    Sys_Init();
-    JIT_Execute_Init();
-    MetaData_Init();
-    Type_Init();
-    Heap_Init();
-    Finalizer_Init();
-    Socket_Init();
+    exl::logger::log("\aConnected\n");
+    exl::logger::log("\aConnected\n");
+    ShowUsageLol();
+    DNA_Init();
     exl::logger::log("\aConnected\n");
 });
 

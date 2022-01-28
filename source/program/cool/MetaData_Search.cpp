@@ -169,12 +169,12 @@ tMetaData* MetaData_GetResolutionScopeMetaData(tMetaData *pMetaData, IDX_TABLE r
 
 tMD_TypeDef* MetaData_GetTypeDefFromName(tMetaData *pMetaData, STRING nameSpace, STRING name, tMD_TypeDef *pInNestedClass, U8 assertExists) {
 	U32 i;
+       	exl::logger::log(0, "pogyoushi\n");
 
 	for (i=1; i<=pMetaData->tables.numRows[MD_TABLE_TYPEDEF]; i++) {
 		tMD_TypeDef *pTypeDef;
 
 		pTypeDef = (tMD_TypeDef*)MetaData_GetTableRow(pMetaData, MAKE_TABLE_INDEX(MD_TABLE_TYPEDEF, i));
-//        printf("pogw %d\n", pTypeDef->isTypeInitialised);
 		if (pInNestedClass == pTypeDef->pNestedIn &&
 			strcmp(name, pTypeDef->name) == 0 &&
 			(pInNestedClass != NULL || strcmp(nameSpace, pTypeDef->nameSpace) == 0)) {

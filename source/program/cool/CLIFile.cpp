@@ -108,10 +108,12 @@ tMetaData* CLIFile_GetMetaDataForAssembly(unsigned char *pAssemblyName) {
 		tCLIFile *pCLIFile;
 		unsigned char fileName[256];
 		nn::util::SNPrintf((char*) fileName, 256, "content:/NetData/%s.dll", pAssemblyName);
+		log_f(0, "Attempting to load %s\n", fileName);
 		pCLIFile = CLIFile_Load((char*) fileName);
 		if (pCLIFile == NULL) {
 			Crash("Cannot load required assembly file: %s", fileName);
 		}
+		log_f(0, "Done attempting to load %s\n", fileName);
 		return pCLIFile->pMetaData;
 	}
 }
@@ -133,12 +135,15 @@ tMD_TypeDef* CLIFile_FindTypeInAllLoadedAssemblies(STRING nameSpace, STRING name
 	return NULL;
 }
 
+void asdasdoasdad();
+
 static void* LoadFileFromDisk(char *pFileName) {
-	nn::fs::FileHandle f;
+	nn::fs::FileHandle f = {0};
 	void *pData = NULL;
 
-    log_f(0, "Among sus %s\n", pFileName);
-	nn::Result rc = nn::fs::OpenFile(&f, pFileName, nn::fs::OpenMode_Read|nn::fs::OpenMode_Binary);
+    log_f(0, "Among sus %s %p %p\n", pFileName, nn::fs::OpenFile, asdasdoasdad);
+	nn::Result rc = nn::fs::OpenFile(&f, pFileName, nn::fs::OpenMode_Read/* |nn::fs::OpenMode_Binary */);
+	log_f(0, "RC: %d", rc.GetInnerValueForDebug());
 	if (rc.IsSuccess()) {
 		s64 len = 0;
 		rc = nn::fs::GetFileSize(&len, f);
